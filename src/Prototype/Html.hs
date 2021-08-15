@@ -161,3 +161,17 @@ namespaceIndex profile lists = H.div $ do
   H.ul $
     forM_ lists $ \TodoList {..} -> do
       H.li (H.toHtml tlName)
+
+
+--------------------------------------------------------------------------------
+todoListIndex :: Profile -> TodoList -> Html
+todoListIndex profile list = H.div $ do
+  H.h1 "Namespace index page"
+  H.toHtml (namespace profile)
+  H.toHtml (tlName list)
+  H.ul $
+    forM_ (tlItems list) $ \TodoItem {..} -> do
+      H.li $ do
+        H.toHtml tiDescription
+        " - "
+        H.toHtml (show tiState)

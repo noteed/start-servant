@@ -14,7 +14,7 @@ import Text.Blaze.Html5 (Html)
 import qualified Prototype.Database as Database
 import Prototype.Html
   ( databaseIndex, document, document', homePage, loginPage, namespaceIndex
-  , profilePage)
+  , profilePage, todoListIndex)
   -- And also for ToMarkup instances.
 import Prototype.Server.Auth
 import Prototype.Types
@@ -55,6 +55,7 @@ type Protected =
   :<|> "database" :> Get '[HTML] Html
 
   :<|> Capture "namespace" String :> Get '[HTML] Html
+  :<|> Capture "namespace" String :> Capture "list" String :> Get '[HTML] Html
 
 -- 'Protected' will be protected by 'auths', which we still have to specify.
 -- If we get an "Authenticated v", we can trust the information in v, since
@@ -123,7 +124,7 @@ protected database result =
             return $ document (Just profile) "start-servant" $ databaseIndex
           _ -> throwAll err404
       )
-      :<|> \namespace -> do
+      :<|> (\namespace -> do
         -- TODO ^ Validate the namespace, maybe create a custom Capture type ?
         mprofileAndLists <- liftIO . atomically $
           Database.getProfileAndLists database namespace
@@ -131,7 +132,16 @@ protected database result =
         case mprofileAndLists of
           Just (profile, lists) ->
             return $ document (Just profile) "start-servant" $ namespaceIndex profile lists
-          Nothing -> throwAll err404
+          Nothing -> throwAll err404)
+      :<|> (\namespace listname -> do
+        -- TODO ^ Validate the namespace, maybe create a custom Capture type ?
+        mprofileAndList <- liftIO . atomically $
+          Database.getProfileAndList database namespace listname
+
+        case mprofileAndList of
+          Just (profile, list) ->
+            return $ document (Just profile) "start-servant" $ todoListIndex profile list
+          Nothing -> throwAll err404)
     _ -> throwAll err401
 
 getCounter database = do

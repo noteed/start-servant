@@ -69,12 +69,24 @@ getProfile h namespace_ = do
   f (_, profile) =
     namespace (profile :: Profile) == namespace_
 
+getProfileAndLists :: Handle -> String -> STM (Maybe (Profile, [TodoList]))
 getProfileAndLists h namespace = do
   mprofile <- getProfile h namespace
   case mprofile of
     Just profile -> do
       lists <- getTodoLists h namespace
       return (Just (profile, lists))
+    Nothing -> return Nothing
+
+getProfileAndList :: Handle -> String -> String -> STM (Maybe (Profile, TodoList))
+getProfileAndList h namespace listname = do
+  mprofile <- getProfile h namespace
+  case mprofile of
+    Just profile -> do
+      mlist <- getTodoList h namespace listname
+      case mlist of
+        Just list -> return (Just (profile, list))
+        Nothing -> return Nothing
     Nothing -> return Nothing
 
 
@@ -89,6 +101,13 @@ getTodoLists h namespace = do
   lists <- readTVar (hTodoLists h)
   return ((map snd . filter f) lists)
   where f = (namespace ==) . fst
+
+getTodoList h namespace listname = do
+  lists <- readTVar (hTodoLists h)
+  case filter f lists of
+    [(_, list)] -> return (Just list)
+    _ -> return Nothing
+  where f (name, list) = namespace == name && listname == tlName list
 
 
 --------------------------------------------------------------------------------
