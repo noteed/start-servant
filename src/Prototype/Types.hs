@@ -1,7 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Prototype.Types where
 
@@ -14,7 +12,7 @@ import Web.FormUrlEncoded (FromForm)
 
 
 --------------------------------------------------------------------------------
-data Counter = Counter Int
+newtype Counter = Counter Int
 
 
 --------------------------------------------------------------------------------
@@ -38,7 +36,7 @@ instance FromJSON Profile
 
 --------------------------------------------------------------------------------
 -- Keep track of a logged in user. This must match a cookie with a User in it.
-data Session = Session { username :: String }
+newtype Session = Session { username :: String }
   deriving (Eq, Generic, Ord)
 
 instance ToJSON Session

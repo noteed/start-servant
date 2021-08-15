@@ -8,6 +8,7 @@
     buildInputs = [
       pkgs.ghcid
       (pkgs.haskellPackages.ghcWithPackages (hpkgs: [
+        hpkgs.hlint
         hpkgs.servant
         hpkgs.servant-auth
         hpkgs.servant-auth-server
