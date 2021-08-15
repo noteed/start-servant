@@ -6,6 +6,7 @@ module Prototype.Database where
 import Data.List (nub, sort)
 import Control.Concurrent.STM (atomically, newTVar, readTVar, writeTVar, STM, TVar)
 
+import qualified Prototype.Data.Examples as Examples
 import Prototype.Types
 
 
@@ -66,7 +67,7 @@ addSession' ss s = sort (nub (s : ss))
 
 
 --------------------------------------------------------------------------------
-newUsers = newTVar [("secret", Profile "alice" "alice@example.com" "Alice")]
+newUsers = newTVar Examples.users
   -- TODO Each Profile should be in its own TVar.
 
 getUsers h = readTVar (hUsers h)
