@@ -83,6 +83,17 @@ getProfile h user = do
 
 
 --------------------------------------------------------------------------------
+login h credentials = do
+  profiles <- readTVar (hUsers h)
+  case authenticateProfile credentials profiles of
+    Just Profile {..} -> do
+      addSession h namespace
+      let user = User namespace email
+      return (Just user)
+    Nothing -> return Nothing
+
+
+--------------------------------------------------------------------------------
 -- Convert the submitted login Credentials to a Profile.
 authenticateProfile :: Credentials -> [(String, Profile)] -> Maybe Profile
 authenticateProfile credentials profiles = case filter f profiles of

@@ -25,14 +25,7 @@ checkCredentials :: Database.Handle -> CookieSettings -> JWTSettings -> Credenti
                        , Header "Set-Cookie" SetCookie]
                       NoContent)
 checkCredentials database cookieSettings jwtSettings credentials = do
-  muser <- liftIO . atomically $ do
-    profiles <- readTVar (Database.hUsers database)
-    case Database.authenticateProfile credentials profiles of
-      Just Profile {..} -> do
-        Database.addSession database namespace
-        let user = User namespace email
-        return (Just user)
-      Nothing -> return Nothing
+  muser <- liftIO . atomically $ Database.login database credentials
 
   case muser of
     Just user -> do
