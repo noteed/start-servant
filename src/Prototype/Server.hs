@@ -49,6 +49,7 @@ type Protected =
 
   :<|> "a" :> "sessions" :> Get '[JSON] [Session]
   :<|> "a" :> "profiles" :> Get '[JSON] [Profile]
+  :<|> "a" :> "lists" :> Get '[JSON] [TodoList]
 
   :<|> "database" :> Get '[HTML] Html
 
@@ -112,6 +113,7 @@ protected database result =
       )
       :<|> getSessions database
       :<|> getProfiles database
+      :<|> getAllTodoLists database
       :<|> return databaseIndex
       :<|> \namespace -> do
         -- TODO ^ Validate the namespace, maybe create a custom Capture type ?
@@ -137,6 +139,9 @@ getSessions database = do
 
 getProfiles database = do
   liftIO . atomically $ Database.getProfiles database
+
+getAllTodoLists database = do
+  liftIO . atomically $ Database.getAllTodoLists database
 
 
 --------------------------------------------------------------------------------

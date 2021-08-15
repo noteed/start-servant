@@ -99,6 +99,7 @@ databaseIndex = H.div $ do
   H.ul $ do
     H.li $ H.a ! A.href "/a/sessions" $ "Sessions"
     H.li $ H.a ! A.href "/a/profiles" $ "Profiles"
+    H.li $ H.a ! A.href "/a/lists" $ "Todo lists"
 
 
 --------------------------------------------------------------------------------

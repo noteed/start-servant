@@ -81,6 +81,10 @@ getProfileAndLists h namespace = do
 --------------------------------------------------------------------------------
 newTodoLists = newTVar Examples.todoLists
 
+getAllTodoLists h = do
+  lists <- readTVar (hTodoLists h)
+  return (map snd lists)
+
 getTodoLists h namespace = do
   lists <- readTVar (hTodoLists h)
   return ((map snd . filter f) lists)
