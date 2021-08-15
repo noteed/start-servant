@@ -72,16 +72,6 @@ newUsers = newTVar Examples.users
 
 getUsers h = readTVar (hUsers h)
 
--- Return a Profile matching a User (which comes from a cookie). It also checks
--- that a corresponding session exists.
-getProfile h user = do
-  sessions <- getSessions h
-  case lookupSession user sessions of
-    Nothing -> return Nothing
-    Just _ -> do
-      profiles <- getUsers h
-      return $ lookupProfile user profiles
-
 
 --------------------------------------------------------------------------------
 login h credentials = do
@@ -92,6 +82,16 @@ login h credentials = do
       let user = User namespace email
       return (Just user)
     Nothing -> return Nothing
+
+-- Return a Profile matching a User (which comes from a cookie). It also checks
+-- that a corresponding session exists.
+getLoggedInProfile h user = do
+  sessions <- getSessions h
+  case lookupSession user sessions of
+    Nothing -> return Nothing
+    Just _ -> do
+      profiles <- getUsers h
+      return $ lookupProfile user profiles
 
 
 --------------------------------------------------------------------------------

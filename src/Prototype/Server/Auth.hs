@@ -19,12 +19,12 @@ import Prototype.Types (Credentials, Profile(..), User(..))
 --------------------------------------------------------------------------------
 -- This is the login handler. We create a cookie with a User content, signed by
 -- our key. Later, in a Auth protected route, we can retrieve it.
-checkCredentials :: Database.Handle -> CookieSettings -> JWTSettings -> Credentials
+login :: Database.Handle -> CookieSettings -> JWTSettings -> Credentials
   -> Handler (Headers '[ Header "Location" String
                        , Header "Set-Cookie" SetCookie
                        , Header "Set-Cookie" SetCookie]
                       NoContent)
-checkCredentials database cookieSettings jwtSettings credentials = do
+login database cookieSettings jwtSettings credentials = do
   muser <- liftIO . atomically $ Database.login database credentials
 
   case muser of

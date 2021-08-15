@@ -57,7 +57,7 @@ protected :: Database.Handle -> Servant.Auth.Server.AuthResult User -> Server Pr
 protected database result =
   (case result of
     Servant.Auth.Server.Authenticated user -> do
-      mprofile <- liftIO . atomically $ Database.getProfile database user
+      mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
       case mprofile of
         Just profile -> do
           return $ homePage (Just profile)
@@ -70,7 +70,7 @@ protected database result =
   :<|>
   (case result of
     Servant.Auth.Server.Authenticated user -> do
-      mprofile <- liftIO . atomically $ Database.getProfile database user
+      mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
       case mprofile of
         Just profile -> do
           return $ loginPage (Just profile)
@@ -84,7 +84,7 @@ protected database result =
   case result of
     Servant.Auth.Server.Authenticated user ->
       (do
-        mprofile <- liftIO . atomically $ Database.getProfile database user
+        mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
         case mprofile of
           Just profile -> return (profilePage profile)
           _ -> throwAll err404
@@ -96,7 +96,7 @@ protected database result =
       :<|> getCounter database
       :<|> bumpCounter database
       :<|> (do
-        mprofile <- liftIO . atomically $ Database.getProfile database user
+        mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
         case mprofile of
           Just profile -> return profile
           _ -> throwAll err404
@@ -133,6 +133,6 @@ type Unprotected =
 -- particular the route to get logged in.
 unprotected :: Database.Handle -> CookieSettings -> JWTSettings -> Server Unprotected
 unprotected database cs jwts =
-       checkCredentials database cs jwts
+       login database cs jwts
   :<|> serveDirectoryFileServer "static/"
        -- ^ This presents an index of available files within the directory.
