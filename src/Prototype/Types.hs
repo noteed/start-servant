@@ -42,16 +42,6 @@ newtype Session = Session { username :: String }
 instance ToJSON Session
 instance FromJSON Session
 
--- In addition of `lookupProfile`, we can call this function to make sure a
--- session was created.
-lookupSession :: User -> [Session] -> Maybe Session
-lookupSession user sessions = case filter f sessions of
-  [s] -> Just s
-  _ -> Nothing
-  where
-  f session =
-    username (session :: Session) == username (user :: User)
-
 
 --------------------------------------------------------------------------------
 -- The signed data we write to/read from cookies. Should not be used outside
@@ -74,24 +64,3 @@ instance ToJSON Credentials
 instance FromJSON Credentials
 
 instance FromForm Credentials
-
-
---------------------------------------------------------------------------------
--- Convert the submitted login Credentials to a Profile.
-authenticateProfile :: Credentials -> [(String, Profile)] -> Maybe Profile
-authenticateProfile credentials profiles = case filter f profiles of
-  [(_, p)] -> Just p
-  _ -> Nothing
-  where
-  f (pw, profile) =
-    namespace (profile :: Profile) == username (credentials :: Credentials) &&
-    pw == password (credentials :: Credentials)
-
--- Convert a User (taken from a signed cookie) to a Profile.
-lookupProfile :: User -> [(String, Profile)] -> Maybe Profile
-lookupProfile user profiles = case filter f profiles of
-  [(_, p)] -> Just p
-  _ -> Nothing
-  where
-  f (_, profile) =
-    namespace (profile :: Profile) == username (user :: User)

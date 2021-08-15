@@ -13,7 +13,7 @@ import Servant.Auth.Server
 import Web.FormUrlEncoded (FromForm)
 
 import qualified Prototype.Database as Database
-import Prototype.Types (authenticateProfile, Credentials, Profile(..), User(..))
+import Prototype.Types (Credentials, Profile(..), User(..))
 
 
 --------------------------------------------------------------------------------
@@ -27,7 +27,7 @@ checkCredentials :: Database.Handle -> CookieSettings -> JWTSettings -> Credenti
 checkCredentials database cookieSettings jwtSettings credentials = do
   muser <- liftIO . atomically $ do
     profiles <- readTVar (Database.hUsers database)
-    case authenticateProfile credentials profiles of
+    case Database.authenticateProfile credentials profiles of
       Just Profile {..} -> do
         Database.addSession database namespace
         let user = User namespace email
