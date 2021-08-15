@@ -41,6 +41,7 @@ homePage (Just Profile {..}) = H.div $ do
 
   H.ul $ do
     H.li $ H.a ! A.href "/settings/profile" $ "Your profile"
+    H.li $ H.a ! A.href "/database" $ "Database"
 
 homePage Nothing = H.div $ do
   "Please "
@@ -86,3 +87,14 @@ loginPage Nothing = H.div $ do
     H.div $ do
       H.button
         ! A.type_ "submit" $ "Login"
+
+
+--------------------------------------------------------------------------------
+databaseIndex = H.div $ do
+  H.h1 "Database index"
+
+  H.p "This page lists all the objects manipulated in this prototype."
+
+  H.ul $ do
+    H.li $ H.a ! A.href "/a/sessions" $ "Sessions"
+    H.li $ H.a ! A.href "/a/profiles" $ "Profiles"

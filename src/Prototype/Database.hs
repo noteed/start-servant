@@ -49,6 +49,13 @@ bumpCounter h = do
 
 
 --------------------------------------------------------------------------------
+getProfiles :: Handle -> STM [Profile]
+getProfiles h = do
+  users <- readTVar (hUsers h)
+  return (map snd users)
+
+
+--------------------------------------------------------------------------------
 newSessions :: STM (TVar [Session])
 newSessions = newTVar []
   -- TODO Each Session should be in its own TVar.

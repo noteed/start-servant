@@ -12,7 +12,8 @@ import Servant.HTML.Blaze (HTML)
 import Text.Blaze.Html5 (Html)
 
 import qualified Prototype.Database as Database
-import Prototype.Html (homePage, loginPage, profilePage) -- And also for ToMarkup instances.
+import Prototype.Html
+  ( databaseIndex, homePage, loginPage, profilePage) -- And also for ToMarkup instances.
 import Prototype.Server.Auth
 import Prototype.Types
 
@@ -46,6 +47,9 @@ type Protected =
   :<|> "a" :> "settings" :> "profile" :> Get '[JSON, HTML] Profile
 
   :<|> "a" :> "sessions" :> Get '[JSON] [Session]
+  :<|> "a" :> "profiles" :> Get '[JSON] [Profile]
+
+  :<|> "database" :> Get '[HTML] Html
 
 -- 'Protected' will be protected by 'auths', which we still have to specify.
 -- If we get an "Authenticated v", we can trust the information in v, since
@@ -104,6 +108,8 @@ protected database result =
                --  TODO we must log this case properly.
       )
       :<|> getSessions database
+      :<|> getProfiles database
+      :<|> return databaseIndex
     _ -> throwAll err401
 
 getCounter database = do
@@ -117,6 +123,9 @@ bumpCounter database = do
 
 getSessions database = do
   liftIO . atomically $ Database.getSessions database
+
+getProfiles database = do
+  liftIO . atomically $ Database.getProfiles database
 
 
 --------------------------------------------------------------------------------
