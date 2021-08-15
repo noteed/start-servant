@@ -32,6 +32,51 @@ instance ToMarkup Profile where
 
 
 --------------------------------------------------------------------------------
+document mprofile title body = H.docTypeHtml $ do
+  H.head $ do
+    H.title $ H.toHtml title
+  H.body $ do
+    page mprofile body
+
+document' title body = H.docTypeHtml $ do
+  H.head $ do
+    H.title $ H.toHtml title
+  H.body $ do
+    page' body
+
+
+--------------------------------------------------------------------------------
+page mprofile body = do
+  nav mprofile
+  body
+  H.footer $ H.code $ "start-servant"
+
+page' body = do
+  shortNav
+  body
+  H.footer $ H.code $ "start-servant"
+
+
+--------------------------------------------------------------------------------
+nav :: Maybe Profile -> Html
+
+nav (Just Profile {..}) = H.div $
+  H.ul $ do
+    H.li $ H.a ! A.href "/" $ "Home"
+    H.li $ H.toHtml namespace
+    H.li $ H.a ! A.href "/settings/profile" $ "Your profile"
+    H.li $ H.a ! A.href "/logout" $ "Sign out"
+
+nav Nothing = H.div $
+  H.ul $ do
+    H.li $ H.a ! A.href "/" $ "Home"
+    H.li $ H.a ! A.href "/login" $ "Sign in"
+
+shortNav =
+  H.ul $ do
+    H.li $ H.a ! A.href "/" $ "Home"
+
+--------------------------------------------------------------------------------
 homePage :: Maybe Profile -> Html
 
 homePage (Just Profile {..}) = H.div $ do
@@ -45,9 +90,15 @@ homePage (Just Profile {..}) = H.div $ do
     H.li $ H.a ! A.href "/database" $ "Database"
 
 homePage Nothing = H.div $ do
-  "Please "
-  H.a ! A.href "/login" $ "log in"
-  "."
+  H.p $ do
+    "Welcome to "
+    H.code "start-servant"
+    ". This is an example application to demonstrate how Servant and STM can "
+    "be used to prototype a classical three-tier web application (where STM "
+    "replaces a traditional relational database)."
+
+  H.p $
+    "Please sign in."
 
 
 --------------------------------------------------------------------------------
@@ -65,7 +116,7 @@ loginPage (Just Profile {..}) = H.div $
   H.toHtml ("Hi " ++ namespace ++ ", you're already logged in.")
 
 loginPage Nothing = H.div $ do
-  H.h1 "Login page"
+  H.h1 "Sign in"
   H.form
     ! A.action "/login"
     ! A.method "POST" $ do

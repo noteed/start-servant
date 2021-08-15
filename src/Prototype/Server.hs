@@ -13,7 +13,8 @@ import Text.Blaze.Html5 (Html)
 
 import qualified Prototype.Database as Database
 import Prototype.Html
-  ( databaseIndex, homePage, loginPage, namespaceIndex, profilePage)
+  ( databaseIndex, document, document', homePage, loginPage, namespaceIndex
+  , profilePage)
   -- And also for ToMarkup instances.
 import Prototype.Server.Auth
 import Prototype.Types
@@ -68,12 +69,12 @@ protected database result =
       mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
       case mprofile of
         Just profile -> do
-          return $ homePage (Just profile)
+          return $ document (Just profile) "start-servant" $ homePage (Just profile)
         _ -> throwAll err404
              -- ^ If the user is authenticated, a profile must exists, so
              --  TODO we must log this case properly.
     _ ->
-      return $ homePage Nothing
+      return $ document Nothing "start-servant" $ homePage Nothing
   )
   :<|>
   (case result of
@@ -81,12 +82,12 @@ protected database result =
       mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
       case mprofile of
         Just profile -> do
-          return $ loginPage (Just profile)
+          return $ document' "start-servant" $ loginPage (Just profile)
         _ -> throwAll err404
              -- ^ If the user is authenticated, a profile must exists, so
              --  TODO we must log this case properly.
     _ ->
-      return $ loginPage Nothing
+      return $ document' "start-servant" $ loginPage Nothing
   )
   :<|>
   case result of
@@ -94,7 +95,8 @@ protected database result =
       (do
         mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
         case mprofile of
-          Just profile -> return (profilePage profile)
+          Just profile ->
+            return $ document mprofile "start-servant" $ profilePage profile
           _ -> throwAll err404
                -- ^ If the user is authenticated, a profile must exists, so
                --  TODO we must log this case properly.
@@ -114,14 +116,21 @@ protected database result =
       :<|> getSessions database
       :<|> getProfiles database
       :<|> getAllTodoLists database
-      :<|> return databaseIndex
+      :<|> (do
+        mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
+        case mprofile of
+          Just profile ->
+            return $ document (Just profile) "start-servant" $ databaseIndex
+          _ -> throwAll err404
+      )
       :<|> \namespace -> do
         -- TODO ^ Validate the namespace, maybe create a custom Capture type ?
         mprofileAndLists <- liftIO . atomically $
           Database.getProfileAndLists database namespace
 
         case mprofileAndLists of
-          Just (profile, lists) -> return (namespaceIndex profile lists)
+          Just (profile, lists) ->
+            return $ document (Just profile) "start-servant" $ namespaceIndex profile lists
           Nothing -> throwAll err404
     _ -> throwAll err401
 
