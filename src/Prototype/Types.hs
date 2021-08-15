@@ -28,7 +28,7 @@ data Profile = Profile
   , email :: String
   , name :: String
   }
-   deriving (Eq, Show, Read, Generic)
+  deriving (Show, Read, Generic)
 
 instance ToJSON Profile
 instance FromJSON Profile
@@ -47,7 +47,7 @@ instance FromJSON Session
 -- The signed data we write to/read from cookies. Should not be used outside
 -- the authentication layer.
 data User = User { username :: String, email :: String }
-   deriving (Eq, Show, Read, Generic)
+  deriving (Eq, Show, Read, Generic)
 
 instance ToJSON User
 instance FromJSON User
@@ -58,7 +58,7 @@ instance FromJWT User
 -- The data we need to authenticate a user (then create a cookie with a User in
 -- it).
 data Credentials = Credentials { username :: String, password :: String }
-   deriving (Eq, Show, Read, Generic)
+  deriving (Eq, Show, Read, Generic)
 
 instance ToJSON Credentials
 instance FromJSON Credentials
