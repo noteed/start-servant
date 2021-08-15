@@ -14,6 +14,30 @@ import Web.FormUrlEncoded (FromForm)
 --------------------------------------------------------------------------------
 newtype Counter = Counter Int
 
+data TodoList = TodoList
+  { tlName :: String
+  , tlItems :: [TodoItem]
+  }
+  deriving (Show, Read, Generic)
+
+instance ToJSON TodoList
+instance FromJSON TodoList
+
+data TodoItem = TodoItem
+  { tiDescription :: String
+  , tiState :: TodoState
+  }
+  deriving (Show, Read, Generic)
+
+instance ToJSON TodoItem
+instance FromJSON TodoItem
+
+data TodoState = Todo | InProgress | Done
+  deriving (Show, Read, Generic)
+
+instance ToJSON TodoState
+instance FromJSON TodoState
+
 
 --------------------------------------------------------------------------------
 data Operation = BumpCounter

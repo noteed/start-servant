@@ -4,6 +4,7 @@
 
 module Prototype.Html where
 
+import Control.Monad (forM_)
 import Data.Aeson (FromJSON, ToJSON)
 import Text.Blaze (ToMarkup(toMarkup))
 import Text.Blaze.Html5 (Html, (!))
@@ -98,3 +99,13 @@ databaseIndex = H.div $ do
   H.ul $ do
     H.li $ H.a ! A.href "/a/sessions" $ "Sessions"
     H.li $ H.a ! A.href "/a/profiles" $ "Profiles"
+
+
+--------------------------------------------------------------------------------
+namespaceIndex :: Profile -> [TodoList] -> Html
+namespaceIndex profile lists = H.div $ do
+  H.h1 "Namespace index page"
+  H.toHtml (namespace profile)
+  H.ul $
+    forM_ lists $ \TodoList {..} -> do
+      H.li (H.toHtml tlName)

@@ -22,6 +22,8 @@ data Handle = Handle
     -- ^ Password, and User. Those are real users. We don't store the password
     -- in a specific data type to avoid manipulating it and risking sending it
     -- over the wire.
+  , hTodoLists :: TVar [(String, TodoList)]
+    -- ^ Associates namespaces to Todo lists.
   }
 
 
@@ -31,6 +33,7 @@ newHandle = atomically $ do
   hCounter <- newCounter
   hSessions <- newSessions
   hUsers <- newUsers
+  hTodoLists <- newTodoLists
   return Handle {..}
 
 apply :: Handle -> Operation -> STM ()
@@ -53,6 +56,35 @@ getProfiles :: Handle -> STM [Profile]
 getProfiles h = do
   users <- readTVar (hUsers h)
   return (map snd users)
+
+getProfile h namespace_ = do
+  users <- readTVar (hUsers h)
+  return (lookup' users)
+  where
+
+  lookup' :: [(String, Profile)] -> Maybe Profile
+  lookup' profiles = case filter f profiles of
+    [(_, p)] -> Just p
+    _ -> Nothing
+  f (_, profile) =
+    namespace (profile :: Profile) == namespace_
+
+getProfileAndLists h namespace = do
+  mprofile <- getProfile h namespace
+  case mprofile of
+    Just profile -> do
+      lists <- getTodoLists h namespace
+      return (Just (profile, lists))
+    Nothing -> return Nothing
+
+
+--------------------------------------------------------------------------------
+newTodoLists = newTVar Examples.todoLists
+
+getTodoLists h namespace = do
+  lists <- readTVar (hTodoLists h)
+  return ((map snd . filter f) lists)
+  where f = (namespace ==) . fst
 
 
 --------------------------------------------------------------------------------
