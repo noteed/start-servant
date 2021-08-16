@@ -64,7 +64,8 @@ nav (Just Profile {..}) = H.div $
   H.ul $ do
     H.li $ H.a ! A.href "/" $ "Home"
     H.li $ H.toHtml namespace
-    H.li $ H.a ! A.href "/settings/profile" $ "Your profile"
+    H.li $ H.a ! A.href (H.toValue $ "/" ++ namespace) $ "Your profile"
+    H.li $ H.a ! A.href "/settings/profile" $ "Settings"
     H.li $ H.a ! A.href "/logout" $ "Sign out"
 
 nav Nothing = H.div $
@@ -86,7 +87,8 @@ homePage (Just Profile {..}) = H.div $ do
     "."
 
   H.ul $ do
-    H.li $ H.a ! A.href "/settings/profile" $ "Your profile"
+    H.li $ H.a ! A.href (H.toValue $ "/" ++ namespace) $ "Your profile"
+    H.li $ H.a ! A.href "/settings/profile" $ "Settings"
     H.li $ H.a ! A.href "/database" $ "Database"
 
 homePage Nothing = H.div $ do
@@ -157,18 +159,22 @@ databaseIndex = H.div $ do
 namespaceIndex :: Profile -> [TodoList] -> Html
 namespaceIndex profile lists = H.div $ do
   H.h1 "Namespace index page"
-  H.toHtml (namespace profile)
+  H.div . H.code $ do
+    H.toHtml (namespace profile)
   H.ul $
     forM_ lists $ \TodoList {..} -> do
-      H.li (H.toHtml tlName)
+      H.li $ H.a ! A.href (H.toValue $ "/" ++ namespace profile ++ "/" ++ tlName) $
+        H.toHtml tlName
 
 
 --------------------------------------------------------------------------------
 todoListIndex :: Profile -> TodoList -> Html
 todoListIndex profile list = H.div $ do
   H.h1 "Namespace index page"
-  H.toHtml (namespace profile)
-  H.toHtml (tlName list)
+  H.div . H.code $ do
+    H.toHtml (namespace profile)
+    " / "
+    H.toHtml (tlName list)
   H.ul $
     forM_ (tlItems list) $ \TodoItem {..} -> do
       H.li $ do
