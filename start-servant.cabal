@@ -1,0 +1,76 @@
+cabal-version:      2.2
+name:               start-servant
+version:            0.1.0.0
+category:           web
+extra-source-files:
+    README.md
+
+-- Common language settings
+common lang-settings
+  default-language: Haskell2010
+  ghc-options:
+    -Wall
+    -fno-warn-missing-signatures
+    -fno-warn-unused-do-bind
+
+-- Dependencies common to both the exe and the lib.
+-- This list can be "Extended" using explicit build-depends stanzas in the library or executable.
+-- So far, I've omitted most version bounds, they can be generated using `nix-shell --run 'cabal freeze'`
+common common-dependencies
+  build-depends:
+      -- base (TODO: replace with base-noprelude and use Prelude from Protolude (as mixin))
+      base >=4.7 && <5
+
+    -- servant "core" (& server)
+    , servant
+    , servant-server
+
+    -- servant authentication
+    , servant-auth-server
+
+    -- serialisation/markup
+    , aeson
+    , jose
+    , servant-blaze
+    , blaze-markup
+    , blaze-html
+
+    -- web
+    , http-api-data
+
+    -- DB/storage
+    , stm
+
+    -- Control
+    , mtl
+
+    -- Server
+    , wai
+    , warp
+
+library
+  import: common-dependencies, lang-settings
+  hs-source-dirs: src
+  build-depends:
+    -- Extra servant packages
+      servant-auth
+  exposed-modules:
+      Prototype.Database
+      Prototype.Html
+
+      Prototype.Server
+      Prototype.Server.Auth
+
+      Prototype.Types
+
+      Prototype.Data.Examples
+      Prototype.Pages.Home
+
+executable start-servant
+  import: common-dependencies, lang-settings
+  main-is:          serve.hs
+  build-depends:
+     -- our dependencies
+     start-servant
+  hs-source-dirs:   bin
+  other-modules:
