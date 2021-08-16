@@ -41,6 +41,16 @@ instance FromJSON TodoState
 
 --------------------------------------------------------------------------------
 data Operation = BumpCounter
+  | OpAddItem AddItem
+
+data AddItem = AddItem
+  { aiNamespace
+  , aiTodoListName :: String
+  , aiDescription :: String
+  }
+  deriving (Eq, Show, Read, Generic)
+
+instance FromForm AddItem
 
 
 --------------------------------------------------------------------------------

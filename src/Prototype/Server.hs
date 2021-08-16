@@ -47,6 +47,10 @@ type Protected =
   :<|> "a" :> "counter" :> Get '[JSON] Int
   :<|> "a" :> "bump" :> Verb 'POST 204 '[JSON] NoContent
 
+  :<|> "a" :> "new" :> "items"
+         :> ReqBody '[FormUrlEncoded] AddItem
+         :> Verb 'POST 303 '[JSON] NoContent
+
   :<|> "a" :> "settings" :> "profile" :> Get '[JSON, HTML] Profile
 
   :<|> "a" :> "sessions" :> Get '[JSON] [Session]
@@ -107,6 +111,7 @@ protected database result =
       :<|> return (email (user :: User))
       :<|> getCounter database
       :<|> bumpCounter database
+      :<|> newItem database
       :<|> (do
         mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
         case mprofile of
@@ -151,6 +156,12 @@ getCounter database = do
 
 bumpCounter database = do
   let op = BumpCounter
+  liftIO . atomically $ Database.apply database op
+  return NoContent
+
+newItem database add = do
+  -- TODO Validate aiNamespace against authenticated user.
+  let op = OpAddItem add
   liftIO . atomically $ Database.apply database op
   return NoContent
 
