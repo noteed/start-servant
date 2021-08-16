@@ -39,6 +39,19 @@ newHandle = atomically $ do
 apply :: Handle -> Operation -> STM ()
 apply h BumpCounter = bumpCounter h
 
+apply h (OpAddItem (AddItem {..})) = do
+  lists <- readTVar (hTodoLists h)
+  mlist <- getTodoList h aiNamespace aiTodoListName
+  case mlist of
+    Just list -> do
+      let list' = list { tlItems = tlItems list ++ [TodoItem aiDescription Todo] }
+          f l@(name, TodoList {..})
+            | name == aiNamespace && tlName == aiTodoListName = (name, list')
+            | otherwise = l
+          lists' = map f lists -- TODO Replace the assoc-list by a Map.
+      writeTVar (hTodoLists h) lists'
+    Nothing -> return () -- TODO Return an error instead.
+
 
 --------------------------------------------------------------------------------
 newCounter = newTVar (Counter 1)
