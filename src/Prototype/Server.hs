@@ -13,9 +13,10 @@ import Text.Blaze.Html5 (Html)
 
 import qualified Prototype.Database as Database
 import Prototype.Html
-  ( databaseIndex, document, document', homePage, loginPage, namespaceIndex
+  ( databaseIndex, document, document', loginPage, namespaceIndex
   , profilePage, todoListIndex)
   -- And also for ToMarkup instances.
+import qualified Prototype.Pages.Home as Pages
 import Prototype.Server.Auth
 import Prototype.Types
 
@@ -70,12 +71,12 @@ protected database result =
       mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
       case mprofile of
         Just profile -> do
-          return $ document (Just profile) "start-servant" $ homePage (Just profile)
+          return $ document (Just profile) "start-servant" $ Pages.homePage (Just profile)
         _ -> throwAll err404
              -- ^ If the user is authenticated, a profile must exists, so
              --  TODO we must log this case properly.
     _ ->
-      return $ document Nothing "start-servant" $ homePage Nothing
+      return $ document Nothing "start-servant" $ Pages.homePage Nothing
   )
   :<|>
   (case result of

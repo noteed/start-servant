@@ -81,31 +81,6 @@ shortNav =
   H.ul $ do
     H.li $ H.a ! A.href "/" $ "Home"
 
---------------------------------------------------------------------------------
-homePage :: Maybe Profile -> Html
-
-homePage (Just Profile {..}) = H.div $ do
-  H.div $ do
-    "Hi "
-    H.toHtml name
-    "."
-
-  H.ul $ do
-    H.li $ H.a ! A.href (H.toValue $ "/" ++ namespace) $ "Your profile"
-    H.li $ H.a ! A.href "/settings/profile" $ "Settings"
-    H.li $ H.a ! A.href "/database" $ "Database"
-
-homePage Nothing = H.div $ do
-  H.p $ do
-    "Welcome to "
-    H.code "start-servant"
-    ". This is an example application to demonstrate how Servant and STM can "
-    "be used to prototype a classical three-tier web application (where STM "
-    "replaces a traditional relational database)."
-
-  H.p $
-    "Please sign in."
-
 
 --------------------------------------------------------------------------------
 profilePage :: Profile -> Html
