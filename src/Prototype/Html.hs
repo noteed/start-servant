@@ -49,7 +49,11 @@ document' title body = H.docTypeHtml $ do
 page mprofile body = do
   nav mprofile
   body
-  H.footer $ H.code $ "start-servant"
+  H.footer $ do
+    H.code $ "start-servant"
+    " - "
+    H.a ! A.href "https://github.com/noteed/start-servant" $ "View on GitHub"
+
 
 page' body = do
   shortNav
