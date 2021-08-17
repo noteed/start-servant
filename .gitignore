@@ -1,1 +1,7 @@
 .*.swp
+/dist-newstyle/
+/bin/.dir-locals.el
+/cabal.project.local
+/src/.dir-locals.el
+/dist/
+/TAGS

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-} -- For hard-coded key.
 
-module Main where
+module Main (main) where
 
 import Network.Wai.Handler.Warp (run)
 import Servant
