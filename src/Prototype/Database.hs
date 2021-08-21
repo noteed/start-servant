@@ -106,21 +106,19 @@ getAllTodoLists :: Handle -> STM [TodoList]
 getAllTodoLists h = do
   lists <- readTVar (hTodoLists h)
   let lists' = Map.toList lists
-  mapM readTVar $ concat $ map snd lists'
+  mapM readTVar $ concatMap snd lists'
 
 getTodoLists :: Handle -> String -> STM [TodoList]
 getTodoLists h namespace = do
   lists <- readTVar (hTodoLists h)
-  case Map.lookup namespace lists of
-    Nothing -> return []
-    Just lists' -> mapM readTVar lists'
+  maybe (return mempty) (mapM readTVar) $ Map.lookup namespace lists
 
 getTodoList :: Handle -> String -> String -> STM (Maybe TodoList)
 getTodoList h namespace listname = do
   lists <- getTodoLists h namespace
-  case filter ((listname ==) . tlName) lists of
-    [list] -> return (Just list)
-    _ -> return Nothing
+  pure $ case filter ((listname ==) . tlName) lists of
+    [list] -> Just list
+    _ -> Nothing
 
 
 --------------------------------------------------------------------------------
