@@ -9,5 +9,7 @@ users =
   ]
 
 todoLists =
-  [ ("alice", TodoList "start-servant" [TodoItem "Create a test suite" Todo])
+  [ ("alice",
+      [ TodoList "start-servant" [TodoItem "Create a test suite" Todo]
+      ])
   ]
