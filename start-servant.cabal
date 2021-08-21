@@ -44,6 +44,7 @@ common common-dependencies
     , containers 
 
     -- Control
+    , list-t
     , mtl
 
     -- Server

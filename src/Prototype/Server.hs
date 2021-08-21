@@ -161,7 +161,8 @@ getProfiles database = do
   liftIO . atomically $ Database.getProfiles database
 
 getAllTodoLists database = do
-  liftIO . atomically $ Database.getAllTodoLists database
+  xs <- liftIO . atomically $ Database.getAllTodoLists database
+  return (map snd xs)
 
 
 --------------------------------------------------------------------------------

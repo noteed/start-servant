@@ -9,5 +9,9 @@ users =
   ]
 
 todoLists =
-  [ ("alice", TodoList "start-servant" [TodoItem "Create a test suite" Todo])
+  [ ("TL-1", TodoList "start-servant" [TodoItem "Create a test suite" Todo])
+  ]
+
+namespaceTodoLists =
+  [ ("alice", ["TL-1"])
   ]

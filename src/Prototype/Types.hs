@@ -14,6 +14,8 @@ import Web.FormUrlEncoded (FromForm)
 --------------------------------------------------------------------------------
 newtype Counter = Counter Int
 
+type TodoListId = String
+
 data TodoList = TodoList
   { tlName :: String
   , tlItems :: [TodoItem]

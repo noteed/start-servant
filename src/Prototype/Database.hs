@@ -4,7 +4,13 @@
 module Prototype.Database where
 
 import Data.List (nub, sort)
+import Data.Map (Map)
+import Data.Maybe (catMaybes)
+import qualified Data.Map as Map
 import Control.Concurrent.STM (atomically, newTVar, readTVar, writeTVar, STM, TVar)
+import ListT (toList)
+import qualified StmContainers.Map as STM (Map)
+import qualified StmContainers.Map as STM.Map
 
 import qualified Prototype.Data.Examples as Examples
 import Prototype.Types
@@ -22,8 +28,9 @@ data Handle = Handle
     -- ^ Password, and User. Those are real users. We don't store the password
     -- in a specific data type to avoid manipulating it and risking sending it
     -- over the wire.
-  , hTodoLists :: TVar [(String, TodoList)]
-    -- ^ Associates namespaces to Todo lists.
+  , hTodoLists :: STM.Map TodoListId TodoList
+  , hNamespaceTodoLists :: STM.Map String [TodoListId]
+    -- ^ Associates namespaces to all their Todo lists.
   }
 
 
@@ -34,6 +41,7 @@ newHandle = atomically $ do
   hSessions <- newSessions
   hUsers <- newUsers
   hTodoLists <- newTodoLists
+  hNamespaceTodoLists <- newNamespaceTodoLists
   return Handle {..}
 
 apply :: Handle -> Operation -> STM ()
@@ -91,23 +99,35 @@ getProfileAndList h namespace listname = do
 
 
 --------------------------------------------------------------------------------
-newTodoLists = newTVar Examples.todoLists
+newTodoLists :: STM (STM.Map TodoListId TodoList)
+newTodoLists = do
+  m <- STM.Map.new
+  mapM_ (\(k, v) -> STM.Map.insert v k m) Examples.todoLists
+  return m
 
-getAllTodoLists h = do
-  lists <- readTVar (hTodoLists h)
-  return (map snd lists)
+getAllTodoLists :: Handle -> STM [(TodoListId, TodoList)]
+getAllTodoLists = toList . STM.Map.listT . hTodoLists
 
+getTodoLists :: Handle -> String -> STM [TodoList]
 getTodoLists h namespace = do
-  lists <- readTVar (hTodoLists h)
-  return ((map snd . filter f) lists)
-  where f = (namespace ==) . fst
+  mids <- STM.Map.lookup namespace (hNamespaceTodoLists h)
+  case mids of
+    Nothing -> return []
+    Just ids -> do
+      mls <- mapM (\i -> STM.Map.lookup i (hTodoLists h)) ids
+      return (catMaybes mls)
 
+getTodoList :: Handle -> String -> String -> STM (Maybe TodoList)
 getTodoList h namespace listname = do
-  lists <- readTVar (hTodoLists h)
-  case filter f lists of
-    [(_, list)] -> return (Just list)
-    _ -> return Nothing
-  where f (name, list) = namespace == name && listname == tlName list
+  lists <- getTodoLists h namespace
+  pure $ case filter ((listname ==) . tlName) lists of
+    [list] -> Just list
+    _ -> Nothing
+
+newNamespaceTodoLists = do
+  m <- STM.Map.new
+  mapM_ (\(k, v) -> STM.Map.insert v k m) Examples.namespaceTodoLists
+  return m
 
 
 --------------------------------------------------------------------------------
