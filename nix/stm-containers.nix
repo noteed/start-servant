@@ -5,8 +5,6 @@ let
 
   inherit (import ./sources.nix) gitignore stm-containers stm-hamt focus; 
 
-  inherit (import gitignore { inherit lib; }) gitignoreSource;
-
   stmContainersOverrides = selfh: superh: {
     stm-containers =
       selfh.callCabal2nix "stm-containers" stm-containers { };
