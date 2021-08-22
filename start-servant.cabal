@@ -40,6 +40,8 @@ common common-dependencies
 
     -- DB/storage
     , stm
+    , stm-containers 
+    , containers 
 
     -- Control
     , mtl
