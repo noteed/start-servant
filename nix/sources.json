@@ -5,6 +5,12 @@
         "rev": "434f9f8e49b847ef3e648672c5564b6dd0d3be67",
         "type": "git"
     },
+    "focus": {
+        "ref": "master",
+        "repo": "git@github.com:nikita-volkov/focus",
+        "rev": "5021aa0a2413d523c875317ae38ee8bac02f422b",
+        "type": "git"
+    },
     "gitignore": {
         "branch": "master",
         "description": "Nix function for filtering local git sources",
@@ -39,5 +45,23 @@
         "type": "tarball",
         "url": "https://github.com/NixOS/nixpkgs-channels/archive/4b6bfecc0bd.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "primitive": {
+        "ref": "master",
+        "repo": "git@github.com:haskell/primitive",
+        "rev": "fd3e613fb0a9c17bc55bcbfb746b132c596f6857",
+        "type": "git"
+    },
+    "stm-containers": {
+        "ref": "master",
+        "repo": "git@github.com:nikita-volkov/stm-containers",
+        "rev": "9682bab53ae2f27354a9869702013774744614b3",
+        "type": "git"
+    },
+    "stm-hamt": {
+        "ref": "master",
+        "repo": "git@github.com:nikita-volkov/stm-hamt",
+        "rev": "81a7b70a79b6be24e751b46aca549cf3fbacc5a7",
+        "type": "git"
     }
 }
