@@ -6,6 +6,11 @@ let
   sources = import ./sources.nix;
 
   # We can overlay haskell packages here.
-  haskellOverlays = with sources; [ ];
+  haskellOverlays =
+    let
+      # stm-containers is marked as broken in nixpkgs; so we're building it ourselves.
+      stm-containers-overlay = import ./stm-containers.nix;
+    in
+      with sources; [ stm-containers-overlay ];
 
 in haskellOverlays ++ [ (import ./overlay.nix) ]
