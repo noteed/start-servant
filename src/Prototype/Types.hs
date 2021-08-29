@@ -19,10 +19,10 @@ import           Web.FormUrlEncoded             ( FromForm )
 --------------------------------------------------------------------------------
 newtype Counter = Counter Int
 
-type TodoListId = String
+type TodoListId = Text
 
 data TodoList = TodoList
-  { tlName  :: String
+  { tlName  :: Text
   , tlItems :: [TodoItem]
   }
   deriving (Show, Read, Generic)
@@ -31,7 +31,7 @@ instance ToJSON TodoList
 instance FromJSON TodoList
 
 data TodoItem = TodoItem
-  { tiDescription :: String
+  { tiDescription :: Text
   , tiState       :: TodoState
   }
   deriving (Show, Read, Generic)
@@ -55,9 +55,9 @@ data Operation = BumpCounter
 -- This could e.g. match an organization, a "system user", or a generic "ghost
 -- user" where all deleted real users are sent.
 data Profile = Profile
-  { namespace :: String
-  , email     :: String
-  , name      :: String
+  { namespace :: Text
+  , email     :: Text
+  , name      :: Text
   }
   deriving (Show, Read, Generic)
 
@@ -82,7 +82,7 @@ instance ToMarkup Profile where
 
 --------------------------------------------------------------------------------
 -- Keep track of a logged in user. This must match a cookie with a User in it.
-newtype Session = Session { username :: String }
+newtype Session = Session { username :: Text }
   deriving (Eq, Generic, Ord)
 
 instance ToJSON Session
@@ -93,8 +93,8 @@ instance FromJSON Session
 -- The signed data we write to/read from cookies. Should not be used outside
 -- the authentication layer.
 data User = User
-  { username :: String
-  , email    :: String
+  { username :: Text
+  , email    :: Text
   }
   deriving (Eq, Show, Read, Generic)
 
@@ -107,8 +107,8 @@ instance FromJWT User
 -- The data we need to authenticate a user (then create a cookie with a User in
 -- it).
 data Credentials = Credentials
-  { username :: String
-  , password :: String
+  { username :: Text
+  , password :: Text
   }
   deriving (Eq, Show, Read, Generic)
 

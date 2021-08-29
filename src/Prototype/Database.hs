@@ -3,6 +3,7 @@
 
 module Prototype.Database where
 
+import Prelude hiding (Handle, toList)
 import Data.List (nub, sort)
 import Data.Maybe (catMaybes)
 import Control.Concurrent.STM (atomically, newTVar, readTVar, writeTVar, STM, TVar)
@@ -22,12 +23,12 @@ data Handle = Handle
     -- ^ This is only to keep track of logged in users. It means that in
     -- addition of having a User set in a cookie, the corresponding session
     -- must be present here.
-  , hUsers :: TVar [(String, Profile)]
+  , hUsers :: TVar [(Text, Profile)]
     -- ^ Password, and User. Those are real users. We don't store the password
     -- in a specific data type to avoid manipulating it and risking sending it
     -- over the wire.
   , hTodoLists :: STM.Map TodoListId TodoList
-  , hNamespaceTodoLists :: STM.Map String [TodoListId]
+  , hNamespaceTodoLists :: STM.Map Text [TodoListId]
     -- ^ Associates namespaces to all their Todo lists.
   }
 
@@ -68,14 +69,14 @@ getProfile h namespace_ = do
   return (lookup' users)
   where
 
-  lookup' :: [(String, Profile)] -> Maybe Profile
+  lookup' :: [(Text, Profile)] -> Maybe Profile
   lookup' profiles = case filter f profiles of
     [(_, p)] -> Just p
     _ -> Nothing
   f (_, profile) =
     namespace (profile :: Profile) == namespace_
 
-getProfileAndLists :: Handle -> String -> STM (Maybe (Profile, [TodoList]))
+getProfileAndLists :: Handle -> Text -> STM (Maybe (Profile, [TodoList]))
 getProfileAndLists h namespace = do
   mprofile <- getProfile h namespace
   case mprofile of
@@ -84,14 +85,14 @@ getProfileAndLists h namespace = do
       return (Just (profile, lists))
     Nothing -> return Nothing
 
-getProfileAndList :: Handle -> String -> String -> STM (Maybe (Profile, TodoList))
+getProfileAndList :: Handle -> Text -> Text -> STM (Maybe (Profile, TodoList))
 getProfileAndList h namespace listname = do
   mprofile <- getProfile h namespace
   case mprofile of
     Just profile -> do
       mlist <- getTodoList h namespace listname
       case mlist of
-        Just list -> return (Just (profile, list))
+        Just list' -> return (Just (profile, list'))
         Nothing -> return Nothing
     Nothing -> return Nothing
 
@@ -106,7 +107,7 @@ newTodoLists = do
 getAllTodoLists :: Handle -> STM [(TodoListId, TodoList)]
 getAllTodoLists = toList . STM.Map.listT . hTodoLists
 
-getTodoLists :: Handle -> String -> STM [TodoList]
+getTodoLists :: Handle -> Text -> STM [TodoList]
 getTodoLists h namespace = do
   mids <- STM.Map.lookup namespace (hNamespaceTodoLists h)
   case mids of
@@ -115,11 +116,11 @@ getTodoLists h namespace = do
       mls <- mapM (\i -> STM.Map.lookup i (hTodoLists h)) ids
       return (catMaybes mls)
 
-getTodoList :: Handle -> String -> String -> STM (Maybe TodoList)
+getTodoList :: Handle -> Text -> Text -> STM (Maybe TodoList)
 getTodoList h namespace listname = do
   lists <- getTodoLists h namespace
   pure $ case filter ((listname ==) . tlName) lists of
-    [list] -> Just list
+    [list'] -> Just list'
     _ -> Nothing
 
 newNamespaceTodoLists = do
@@ -176,7 +177,7 @@ getLoggedInProfile h user = do
 
 --------------------------------------------------------------------------------
 -- Convert the submitted login Credentials to a Profile.
-authenticateProfile :: Credentials -> [(String, Profile)] -> Maybe Profile
+authenticateProfile :: Credentials -> [(Text, Profile)] -> Maybe Profile
 authenticateProfile credentials profiles = case filter f profiles of
   [(_, p)] -> Just p
   _ -> Nothing
@@ -186,7 +187,7 @@ authenticateProfile credentials profiles = case filter f profiles of
     pw == password (credentials :: Credentials)
 
 -- Convert a User (taken from a signed cookie) to a Profile.
-lookupProfile :: User -> [(String, Profile)] -> Maybe Profile
+lookupProfile :: User -> [(Text, Profile)] -> Maybe Profile
 lookupProfile user profiles = case filter f profiles of
   [(_, p)] -> Just p
   _ -> Nothing
