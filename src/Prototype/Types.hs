@@ -8,7 +8,19 @@
 #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Prototype.Types where
+module Prototype.Types
+  ( Counter(..)
+  , TodoListId
+  , TodoList(..)
+  , TodoItem(..)
+  , TodoState(..)
+  , Operation(..)
+  , Namespace(..)
+  , Profile(..)
+  , Credentials(..)
+  , User(..)
+  , Session(..)
+  ) where
 
 import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
