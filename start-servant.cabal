@@ -71,6 +71,9 @@ common common-dependencies
     , wai
     , warp
 
+    -- Logging 
+    , monad-log 
+
 library
   import: common-dependencies, lang-settings, common-extensions
   hs-source-dirs: src
@@ -81,7 +84,6 @@ library
 
       Prelude 
 
-      Prototype.Database
       Prototype.Html
 
       Prototype.Server
@@ -100,6 +102,10 @@ library
 
       -- Grantees of permissions 
       Prototype.Grantee.Group 
+
+      -- Runtime and execution
+      Prototype.Runtime 
+      Prototype.Runtime.Database 
 
 executable start-servant
   import: common-dependencies, lang-settings, common-extensions
