@@ -17,10 +17,16 @@ that suits our use case.
 
 -}
 module Prototype.ACL
-  (  -- * Typeclasses describing properties
+  (
+    -- * Typeclasses describing properties
+    -- ** Resources
     Resource(..)
+  , ResourceOps(..)
+
+  -- ** Grantees
   , Grantee(..)
   , GroupedGrantee(..)
+  , GroupedGranteeOps(..)
 
   -- * Re-exports
   -- We should avoid re-exports, but here it makes sense for convenience.
@@ -38,6 +44,8 @@ class Resource r where
   -- | A resource must be tagged; it can have 0 or 1 tags.
   resourceTags :: r -> Set Tag
 
+-- | Operations on some resource in some @m@
+class Resource r => ResourceOps m r where
   -- | Tag a resource with a set of additional tags/add tags to resource
   tagResource :: r -> Set Tag -> m r
 
@@ -57,8 +65,12 @@ class Grantee g => GroupedGrantee g where
   -- | The groups the grantee belongs to.
   granteeGroups :: g -> Set GroupId
 
+-- | Operations on grantees in some @m@
+class GroupedGrantee g => GroupedGranteeOps m g where
+
   -- | Add grantee to some groups
-  granteeAddToGroups :: g -> Set GroupId -> g
+  granteeAddToGroups :: g -> Set GroupId -> m g
 
   -- | Remove grantee from some groups
-  granteeRemoveFromGroups :: g -> Set GroupId -> g
+  granteeRemoveFromGroups :: g -> Set GroupId -> m g
+

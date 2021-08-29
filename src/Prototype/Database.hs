@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -37,7 +38,7 @@ data Handle = Handle
     -- ^ This is only to keep track of logged in users. It means that in
     -- addition of having a User set in a cookie, the corresponding session
     -- must be present here.
-  , hUsers :: TVar [(Text, Profile)]
+  , hUsers :: TVar [(Secret '[] Text, Profile)]
     -- ^ Password, and User. Those are real users. We don't store the password
     -- in a specific data type to avoid manipulating it and risking sending it
     -- over the wire.
@@ -83,7 +84,6 @@ getProfile h namespace_ = do
   return (lookup' users)
   where
 
-  lookup' :: [(Text, Profile)] -> Maybe Profile
   lookup' profiles = case filter f profiles of
     [(_, p)] -> Just p
     _ -> Nothing
@@ -167,15 +167,13 @@ newUsers = newTVar Examples.users
 
 getUsers h = readTVar (hUsers h)
 
-
 --------------------------------------------------------------------------------
 login h credentials = do
   profiles <- readTVar (hUsers h)
   case authenticateProfile credentials profiles of
     Just Profile {..} -> do
       addSession h namespace
-      -- TODO: user groups & tag-rels support!
-      let user = User namespace email undefined undefined
+      let user = User namespace email profGroups profTagRels
       return (Just user)
     Nothing -> return Nothing
 
@@ -191,17 +189,17 @@ getLoggedInProfile h user = do
 
 --------------------------------------------------------------------------------
 -- | Convert the submitted login Credentials to a Profile.
-authenticateProfile :: Credentials -> [(Text, Profile)] -> Maybe Profile
+authenticateProfile :: Credentials -> [(Secret '[] Text, Profile)] -> Maybe Profile
 authenticateProfile credentials profiles = case filter f profiles of
   [(_, p)] -> Just p
   _ -> Nothing
   where
   f (pw, profile) =
     namespace (profile :: Profile) == username (credentials :: Credentials) &&
-    Secret pw == password (credentials :: Credentials)
+    pw =:= password (credentials :: Credentials)
 
 -- Convert a User (taken from a signed cookie) to a Profile.
-lookupProfile :: User -> [(Text, Profile)] -> Maybe Profile
+lookupProfile :: User -> [(Secret '[] Text, Profile)] -> Maybe Profile
 lookupProfile user profiles = case filter f profiles of
   [(_, p)] -> Just p
   _ -> Nothing
