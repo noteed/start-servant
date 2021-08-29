@@ -26,6 +26,8 @@ module Prototype.Types.Secret
   ( Secret(..)
   , SecretExp(..)
   , exposeSecret
+  -- * Compare secrets
+  , (=:=)
   ) where
 
 import           Control.Lens
@@ -99,3 +101,8 @@ instance Typeable s => Show (Secret exp s) where
 
 -- | Secrets that can be exposed via ToJSON
 deriving via s instance (ToJSON s, HasExp 'ToJSONExp exps) => ToJSON (Secret exps s)
+
+(=:=) :: Eq a => Secret exp0 a -> Secret exp1 a -> Bool
+Secret s0 =:= Secret s1 = s0 == s1
+
+infix 4 =:=
