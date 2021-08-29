@@ -16,7 +16,7 @@ import Servant.Auth.Server
 import Servant.HTML.Blaze (HTML)
 import Text.Blaze.Html5 (Html)
 
-import qualified Prototype.Runtime.Database as Database
+import qualified Prototype.Runtime.StmDatabase as Database
 import Prototype.Html
   ( databaseIndex, document, document', loginPage, namespaceIndex
   , profilePage, todoListIndex)
