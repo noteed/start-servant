@@ -5,6 +5,7 @@
 
 module Prototype.Html where
 
+import Prototype.Types.NonEmptyText (nonEmptyToTextCoerce)
 import Control.Monad (forM_)
 import Text.Blaze.Html5 (Html, (!))
 import qualified Text.Blaze.Html5 as H
@@ -125,7 +126,7 @@ namespaceIndex profile lists = H.div $ do
     H.toHtml (namespace profile)
   H.ul $
     forM_ lists $ \TodoList {..} ->
-      H.li $ H.a ! A.href (H.toValue $ "/" <> show (namespace profile) <> "/" <> tlName) $
+      H.li $ H.a ! A.href (H.toValue $ "/" <> nonEmptyToTextCoerce (namespace profile) <> "/" <> tlName) $
         H.toHtml tlName
 
 

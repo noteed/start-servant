@@ -25,6 +25,8 @@ module Prototype.Types.NonEmptyText
   -- * Constructors
   , nonEmptyText
   , nonEmptyTextCoerce
+  -- * Deconstructors
+  , nonEmptyToTextCoerce
   ) where
 
 import           Control.Lens
@@ -83,3 +85,6 @@ nonEmptyTextCoerce = fmap convert . nonEmptyText where convert = view coerced
 instance IsString NonEmptyText where
   fromString = fromMaybe def' . nonEmptyText . T.pack
     where def' = NonEmptyText "[EMPTY_TEXT]"
+
+nonEmptyToTextCoerce :: Coercible a NonEmptyText => a -> Text
+nonEmptyToTextCoerce = view $ coerced . unNonEmptyText
