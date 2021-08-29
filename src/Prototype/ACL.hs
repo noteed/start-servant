@@ -1,10 +1,3 @@
-{-# LANGUAGE StrictData #-}
-{-# LANGUAGE
-    DerivingStrategies
-  , DeriveAnyClass
-  , DerivingVia 
-  , DeriveGeneric 
-#-}
 {- |
 Module: Prototype.ACL
 Description: ACL permissions mock module.

@@ -1,18 +1,9 @@
 {-# LANGUAGE
     TypeFamilies
   , TypeOperators
-  , UndecidableInstances
 #-}
 {-# LANGUAGE
-    TypeSynonymInstances
-  , FlexibleInstances
-  , FlexibleContexts
-#-}
-{-# LANGUAGE
-    DerivingStrategies
-  , DeriveAnyClass
-  , DerivingVia 
-  , DeriveGeneric 
+    DeriveAnyClass
   , GeneralizedNewtypeDeriving
   , StandaloneDeriving
 #-}

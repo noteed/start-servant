@@ -42,13 +42,13 @@ data TagGrant =
   | TagWrite -- ^ Write all objects tagged with a particular tag 
   | TagOwn  -- ^ Own a tag itself; owning a tag gives a grantee all permissions over the tagged objects
             -- with the particular tag. 
-  deriving (Eq, Show, Generic, Ord, Hashable)
+  deriving (Eq, Show, Read, Generic, Ord, Hashable)
   deriving anyclass (ToJSON, FromJSON, ToJSONKey, FromJSONKey)
 
 -- | A Tag, on the other hand, is an arbitrary identifier that can be
 -- attached to resources. The combination of a tag and a grant define the ACL of the resource.
-newtype Tag = Tag { _unTag :: Text }
-            deriving (Eq, Show, ToJSON, FromJSON, Ord, IsString) via Text
+newtype Tag = Tag { _unTag :: NE.NonEmptyText }
+            deriving (Eq, Show, ToJSON, FromJSON, Ord, IsString) via NE.NonEmptyText
 
 makeLenses ''Tag
 

@@ -1,19 +1,9 @@
 {-# LANGUAGE
-    TypeSynonymInstances
-  , FlexibleInstances
-  , FlexibleContexts
-#-}
-{-# LANGUAGE
-    DerivingStrategies
-  , DeriveAnyClass
-  , DerivingVia 
-  , DeriveGeneric 
+    DeriveAnyClass
   , GeneralizedNewtypeDeriving
 #-}
-
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
 {- |
 Module: Prototype.Types.NonEmptyText
 Description: Safe texts guaranteed to be non-empty
