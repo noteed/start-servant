@@ -21,9 +21,13 @@ module Prototype.ACL
     Resource(..)
   , Grantee(..)
   , GroupedGrantee(..)
+
+  -- * Re-exports
+  -- We should avoid re-exports, but here it makes sense for convenience.
+  , module ACLTypes
   ) where
 
-import           Prototype.ACL.Types
+import           Prototype.ACL.Types           as ACLTypes
 
 {- | A tagged resource.
 
