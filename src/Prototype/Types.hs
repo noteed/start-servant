@@ -47,9 +47,13 @@ type TodoListId = Text
 data TodoList = TodoList
   { tlName  :: Text
   , tlItems :: [TodoItem]
+  , tlTags  :: Set Tag
   }
-  deriving (Show, Read, Generic)
+  deriving (Show, Generic)
   deriving anyclass (ToJSON, FromJSON)
+
+instance Resource TodoList where
+  resourceTags = tlTags
 
 data TodoItem = TodoItem
   { tiDescription :: Text
@@ -85,9 +89,11 @@ newtype Namespace = Namespace { _unNamespace :: NonEmptyText }
 -- This could e.g. match an organization, a "system user", or a generic "ghost
 -- user" where all deleted real users are sent.
 data Profile = Profile
-  { namespace :: Namespace
-  , email     :: Text
-  , name      :: Text
+  { namespace   :: Namespace
+  , email       :: Text
+  , name        :: Text
+  , profGroups  :: Set GroupId
+  , profTagRels :: TagRels
   }
   deriving (Show, Generic)
 
