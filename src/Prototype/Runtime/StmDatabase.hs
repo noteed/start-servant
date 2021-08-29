@@ -3,7 +3,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Prototype.Runtime.Database ( Handle(..)
+module Prototype.Runtime.StmDatabase ( Handle(..)
                           , newHandle
                           , apply
                           , getCounter, bumpCounter

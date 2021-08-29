@@ -105,7 +105,7 @@ library
 
       -- Runtime and execution
       Prototype.Runtime 
-      Prototype.Runtime.Database 
+      Prototype.Runtime.StmDatabase 
 
 executable start-servant
   import: common-dependencies, lang-settings, common-extensions
