@@ -161,7 +161,8 @@ login h credentials = do
   case authenticateProfile credentials profiles of
     Just Profile {..} -> do
       addSession h namespace
-      let user = User namespace email
+      -- TODO: user groups & tag-rels support!
+      let user = User namespace email undefined undefined 
       return (Just user)
     Nothing -> return Nothing
 

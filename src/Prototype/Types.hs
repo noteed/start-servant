@@ -3,6 +3,7 @@
 {-# LANGUAGE
     DeriveGeneric
   , DerivingVia 
+  , DeriveAnyClass
 #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
@@ -12,6 +13,7 @@ import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
                                                 )
 import           GHC.Generics                   ( Generic )
+import           Prototype.ACL
 import           Prototype.Types.NonEmptyText
 import           Servant.API                    ( FromHttpApiData
                                                 , ToHttpApiData
@@ -114,16 +116,20 @@ instance FromJSON Session
 -- The signed data we write to/read from cookies. Should not be used outside
 -- the authentication layer.
 data User = User
-  { username :: Namespace
-  , email    :: Text
+  { username    :: Namespace -- ^ User's unique namespace/id
+  , email       :: Text -- ^ TODO: newtype 
+  , userGroups  :: Set GroupId -- ^ Set of groups the user belongs to 
+  , userTagRels :: TagRels -- ^ Users direct tag relationships (eg. tags owned, read, written)
   }
   deriving (Eq, Show, Generic)
+  deriving anyclass (ToJSON, FromJSON, ToJWT, FromJWT)
 
-instance ToJSON User
-instance FromJSON User
+-- TODO: A user is a grantee, and an user may belong to groups. 
+instance Grantee User where
+  granteeTags = userTagRels
 
-instance ToJWT User
-instance FromJWT User
+instance GroupedGrantee User where
+  granteeGroups = userGroups
 
 -- The data we need to authenticate a user (then create a cookie with a User in
 -- it).
