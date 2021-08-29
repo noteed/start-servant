@@ -53,6 +53,7 @@ common common-dependencies
 
     -- web
     , http-api-data
+    , http-types
 
     -- DB/storage
     , stm
@@ -106,6 +107,7 @@ library
       -- Runtime and execution
       Prototype.Runtime 
       Prototype.Runtime.StmDatabase 
+      Prototype.Runtime.Errors 
 
 executable start-servant
   import: common-dependencies, lang-settings, common-extensions
