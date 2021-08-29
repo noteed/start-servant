@@ -2,13 +2,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Prototype.Pages.Home where
+module Prototype.Pages.Home
+  ( thisPage
+  , thisFile
+  , pageUrl
+  , repositoryUrl
+  , sourceUrl
+  , homePage
+  ) where
 
-import Text.Blaze.Html5 (Html, (!))
-import qualified Text.Blaze.Html5 as H
-import qualified Text.Blaze.Html5.Attributes as A
+import           Text.Blaze.Html5               ( (!)
+                                                , Html
+                                                )
+import qualified Text.Blaze.Html5              as H
+import qualified Text.Blaze.Html5.Attributes   as A
 
-import Prototype.Types
+import           Prototype.Types
 
 --------------------------------------------------------------------------------
 thisPage = pageUrl thisFile
@@ -16,8 +25,7 @@ thisPage = pageUrl thisFile
 thisFile = "Prototype/Pages/Home.hs"
 
 pageUrl path =
-  H.a ! A.href (H.toValue $ sourceUrl ++ path) $
-    "This page on GitHub"
+  H.a ! A.href (H.toValue $ sourceUrl ++ path) $ "This page on GitHub"
 
 repositoryUrl = "https://github.com/noteed/start-servant"
 
@@ -47,7 +55,6 @@ homePage Nothing = H.div $ do
     "be used to prototype a classical three-tier web application (where STM "
     "replaces a traditional relational database)."
 
-  H.p
-    "Please sign in."
+  H.p "Please sign in."
 
   thisPage

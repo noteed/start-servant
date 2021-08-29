@@ -1,5 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Prototype.Data.Examples where
+module Prototype.Data.Examples
+  ( users
+  , todoLists
+  , namespaceTodoLists
+  ) where
 
 import           Prototype.Types
 

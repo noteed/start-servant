@@ -2,7 +2,19 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Prototype.Database where
+module Prototype.Database (Handle(..)
+                          , newHandle
+                          , apply
+                          , getCounter, bumpCounter
+                          , getProfiles , getProfile 
+                          , newCounter
+                          , login
+                          , getLoggedInProfile
+                          , getProfileAndLists
+                          , getProfileAndList
+                          , getSessions
+                          , getAllTodoLists 
+                          ) where
 
 import Prototype.Types.Secret 
 import Prelude hiding (Handle, toList)
@@ -177,9 +189,8 @@ getLoggedInProfile h user = do
       profiles <- getUsers h
       return $ lookupProfile user profiles
 
-
 --------------------------------------------------------------------------------
--- Convert the submitted login Credentials to a Profile.
+-- | Convert the submitted login Credentials to a Profile.
 authenticateProfile :: Credentials -> [(Text, Profile)] -> Maybe Profile
 authenticateProfile credentials profiles = case filter f profiles of
   [(_, p)] -> Just p

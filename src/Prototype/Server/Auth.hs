@@ -2,7 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Prototype.Server.Auth where
+module Prototype.Server.Auth (login) where
 
 import Control.Concurrent.STM (atomically)
 import Control.Monad.Trans (liftIO)
@@ -23,7 +23,6 @@ login :: Database.Handle -> CookieSettings -> JWTSettings -> Credentials
                       NoContent)
 login database cookieSettings jwtSettings credentials = do
   muser <- liftIO . atomically $ Database.login database credentials
-
   case muser of
     Just user -> do
       mApplyCookies <- liftIO $ acceptLogin cookieSettings jwtSettings user

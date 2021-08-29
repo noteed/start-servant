@@ -15,6 +15,7 @@ common lang-settings
   default-language: Haskell2010
   ghc-options:
     -Wall
+    -Wmissing-export-lists
     -fno-warn-missing-signatures
     -fno-warn-unused-do-bind
 
