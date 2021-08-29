@@ -125,7 +125,7 @@ namespaceIndex profile lists = H.div $ do
     H.toHtml (namespace profile)
   H.ul $
     forM_ lists $ \TodoList {..} -> 
-      H.li $ H.a ! A.href (H.toValue $ "/" <> namespace profile <> "/" <> tlName) $
+      H.li $ H.a ! A.href (H.toValue $ "/" <> show (namespace profile) <> "/" <> tlName) $
         H.toHtml tlName
 
 

@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE
+    DeriveGeneric
+  , DerivingVia 
+#-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module Prototype.Types where
@@ -9,6 +12,10 @@ import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
                                                 )
 import           GHC.Generics                   ( Generic )
+import           Prototype.Types.NonEmptyText
+import           Servant.API                    ( FromHttpApiData
+                                                , ToHttpApiData
+                                                )
 import           Servant.Auth.Server            ( FromJWT
                                                 , ToJWT
                                                 )
@@ -49,17 +56,31 @@ instance FromJSON TodoState
 --------------------------------------------------------------------------------
 data Operation = BumpCounter
 
+newtype Namespace = Namespace { _unNamespace :: NonEmptyText }
+                  deriving ( Eq
+                           , Show
+                           , IsString
+                           , ToJSON
+                           , FromJSON
+                           , ToMarkup
+                           , H.ToValue
+                           , Semigroup
+                           , Hashable
+                           , Ord
+                           , FromHttpApiData
+                           , ToHttpApiData
+                           ) via NonEmptyText
 
 --------------------------------------------------------------------------------
 -- A profile is a complete account, not necessarily matched to a real person.
 -- This could e.g. match an organization, a "system user", or a generic "ghost
 -- user" where all deleted real users are sent.
 data Profile = Profile
-  { namespace :: Text
+  { namespace :: Namespace
   , email     :: Text
   , name      :: Text
   }
-  deriving (Show, Read, Generic)
+  deriving (Show, Generic)
 
 instance ToJSON Profile
 instance FromJSON Profile
@@ -82,7 +103,7 @@ instance ToMarkup Profile where
 
 --------------------------------------------------------------------------------
 -- Keep track of a logged in user. This must match a cookie with a User in it.
-newtype Session = Session { username :: Text }
+newtype Session = Session { username :: Namespace }
   deriving (Eq, Generic, Ord)
 
 instance ToJSON Session
@@ -93,10 +114,10 @@ instance FromJSON Session
 -- The signed data we write to/read from cookies. Should not be used outside
 -- the authentication layer.
 data User = User
-  { username :: Text
+  { username :: Namespace
   , email    :: Text
   }
-  deriving (Eq, Show, Read, Generic)
+  deriving (Eq, Show, Generic)
 
 instance ToJSON User
 instance FromJSON User
@@ -107,10 +128,10 @@ instance FromJWT User
 -- The data we need to authenticate a user (then create a cookie with a User in
 -- it).
 data Credentials = Credentials
-  { username :: Text
+  { username :: Namespace
   , password :: Text
   }
-  deriving (Eq, Show, Read, Generic)
+  deriving (Eq, Show, Generic)
 
 instance ToJSON Credentials
 instance FromJSON Credentials
