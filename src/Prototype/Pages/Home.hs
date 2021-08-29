@@ -4,15 +4,11 @@
 
 module Prototype.Pages.Home where
 
-import Control.Monad (forM_)
-import Data.Aeson (FromJSON, ToJSON)
-import Text.Blaze (ToMarkup(toMarkup))
 import Text.Blaze.Html5 (Html, (!))
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
 import Prototype.Types
-
 
 --------------------------------------------------------------------------------
 thisPage = pageUrl thisFile

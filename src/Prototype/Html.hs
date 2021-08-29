@@ -5,8 +5,6 @@
 module Prototype.Html where
 
 import Control.Monad (forM_)
-import Data.Aeson (FromJSON, ToJSON)
-import Text.Blaze (ToMarkup(toMarkup))
 import Text.Blaze.Html5 (Html, (!))
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
@@ -14,34 +12,18 @@ import qualified Text.Blaze.Html5.Attributes as A
 import Prototype.Types
 
 
---------------------------------------------------------------------------------
-htmlProfile Profile{..} = do
-  H.div $ do
-    H.div $ do
-      "Display name: "
-      H.toHtml name
-    H.div $ do
-      "Username: "
-      H.toHtml namespace
-    H.div $ do
-      "Email: "
-      H.toHtml email
-
-instance ToMarkup Profile where
-  toMarkup  = htmlProfile
-
 
 --------------------------------------------------------------------------------
 document mprofile title body = H.docTypeHtml $ do
-  H.head $ do
+  H.head $
     H.title $ H.toHtml title
-  H.body $ do
+  H.body $
     page mprofile body
 
 document' title body = H.docTypeHtml $ do
-  H.head $ do
+  H.head $
     H.title $ H.toHtml title
-  H.body $ do
+  H.body $
     page' body
 
 
@@ -50,7 +32,7 @@ page mprofile body = do
   nav mprofile
   body
   H.footer $ do
-    H.code $ "start-servant"
+    H.code "start-servant"
     " - "
     H.a ! A.href "https://github.com/noteed/start-servant" $ "View on GitHub"
 
@@ -58,7 +40,7 @@ page mprofile body = do
 page' body = do
   shortNav
   body
-  H.footer $ H.code $ "start-servant"
+  H.footer $ H.code "start-servant"
 
 
 --------------------------------------------------------------------------------
@@ -78,7 +60,7 @@ nav Nothing = H.div $
     H.li $ H.a ! A.href "/login" $ "Sign in"
 
 shortNav =
-  H.ul $ do
+  H.ul $
     H.li $ H.a ! A.href "/" $ "Home"
 
 
@@ -117,7 +99,7 @@ loginPage Nothing = H.div $ do
         ! A.name "password"
         ! A.id "password"
         ! A.required "required"
-    H.div $ do
+    H.div $
       H.button
         ! A.type_ "submit" $ "Login"
 
@@ -138,10 +120,10 @@ databaseIndex = H.div $ do
 namespaceIndex :: Profile -> [TodoList] -> Html
 namespaceIndex profile lists = H.div $ do
   H.h1 "Namespace index page"
-  H.div . H.code $ do
+  H.div . H.code $
     H.toHtml (namespace profile)
   H.ul $
-    forM_ lists $ \TodoList {..} -> do
+    forM_ lists $ \TodoList {..} ->
       H.li $ H.a ! A.href (H.toValue $ "/" ++ namespace profile ++ "/" ++ tlName) $
         H.toHtml tlName
 
@@ -155,7 +137,7 @@ todoListIndex profile list = H.div $ do
     " / "
     H.toHtml (tlName list)
   H.ul $
-    forM_ (tlItems list) $ \TodoItem {..} -> do
+    forM_ (tlItems list) $ \TodoItem {..} ->
       H.li $ do
         H.toHtml tiDescription
         " - "

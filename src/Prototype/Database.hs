@@ -4,9 +4,7 @@
 module Prototype.Database where
 
 import Data.List (nub, sort)
-import Data.Map (Map)
 import Data.Maybe (catMaybes)
-import qualified Data.Map as Map
 import Control.Concurrent.STM (atomically, newTVar, readTVar, writeTVar, STM, TVar)
 import ListT (toList)
 import qualified StmContainers.Map as STM (Map)
@@ -51,7 +49,7 @@ apply h BumpCounter = bumpCounter h
 --------------------------------------------------------------------------------
 newCounter = newTVar (Counter 1)
 
-getCounter h = do
+getCounter h =
   readTVar (hCounter h)
 
 bumpCounter h = do
