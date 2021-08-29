@@ -9,7 +9,7 @@ import Control.Monad.Trans (liftIO)
 import Servant
 import Servant.Auth.Server
 
-import qualified Prototype.Database as Database
+import qualified Prototype.Runtime.Database as Database
 import Prototype.Types (Credentials)
 
 
