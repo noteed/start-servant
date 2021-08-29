@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -28,7 +29,7 @@ data Handle = Handle
     -- in a specific data type to avoid manipulating it and risking sending it
     -- over the wire.
   , hTodoLists :: STM.Map TodoListId TodoList
-  , hNamespaceTodoLists :: STM.Map Text [TodoListId]
+  , hNamespaceTodoLists :: STM.Map Namespace [TodoListId]
     -- ^ Associates namespaces to all their Todo lists.
   }
 
@@ -76,7 +77,7 @@ getProfile h namespace_ = do
   f (_, profile) =
     namespace (profile :: Profile) == namespace_
 
-getProfileAndLists :: Handle -> Text -> STM (Maybe (Profile, [TodoList]))
+getProfileAndLists :: Handle -> Namespace -> STM (Maybe (Profile, [TodoList]))
 getProfileAndLists h namespace = do
   mprofile <- getProfile h namespace
   case mprofile of
@@ -85,7 +86,7 @@ getProfileAndLists h namespace = do
       return (Just (profile, lists))
     Nothing -> return Nothing
 
-getProfileAndList :: Handle -> Text -> Text -> STM (Maybe (Profile, TodoList))
+getProfileAndList :: Handle -> Namespace -> Text -> STM (Maybe (Profile, TodoList))
 getProfileAndList h namespace listname = do
   mprofile <- getProfile h namespace
   case mprofile of
@@ -107,7 +108,7 @@ newTodoLists = do
 getAllTodoLists :: Handle -> STM [(TodoListId, TodoList)]
 getAllTodoLists = toList . STM.Map.listT . hTodoLists
 
-getTodoLists :: Handle -> Text -> STM [TodoList]
+getTodoLists :: Handle -> Namespace -> STM [TodoList]
 getTodoLists h namespace = do
   mids <- STM.Map.lookup namespace (hNamespaceTodoLists h)
   case mids of
@@ -116,7 +117,7 @@ getTodoLists h namespace = do
       mls <- mapM (\i -> STM.Map.lookup i (hTodoLists h)) ids
       return (catMaybes mls)
 
-getTodoList :: Handle -> Text -> Text -> STM (Maybe TodoList)
+getTodoList :: Handle -> Namespace -> Text -> STM (Maybe TodoList)
 getTodoList h namespace listname = do
   lists <- getTodoLists h namespace
   pure $ case filter ((listname ==) . tlName) lists of
@@ -139,7 +140,7 @@ getSessions = readTVar . hSessions
 
 -- In addition of `authenticateProfile`, we can call this function create a
 -- session.
-addSession h username = do
+addSession h (username :: Namespace) = do
   sessions <- readTVar (hSessions h)
   writeTVar (hSessions h) (addSession' sessions (Session username))
 

@@ -41,7 +41,7 @@ type Protected =
        Get '[HTML] Html
   :<|> "login" :> Get '[HTML] Html
   :<|> "settings" :> "profile" :> Get '[HTML] Html
-  :<|> "settings" :> "profile" :> "username" :> Get '[JSON] Text
+  :<|> "settings" :> "profile" :> "username" :> Get '[JSON] Namespace
   :<|> "settings" :> "profile" :> "email" :> Get '[JSON] Text
 
   :<|> "a" :> "counter" :> Get '[JSON] Int
@@ -55,8 +55,8 @@ type Protected =
 
   :<|> "database" :> Get '[HTML] Html
 
-  :<|> Capture "namespace" Text :> Get '[HTML] Html
-  :<|> Capture "namespace" Text :> Capture "list" Text :> Get '[HTML] Html
+  :<|> Capture "namespace" Namespace :> Get '[HTML] Html
+  :<|> Capture "namespace" Namespace :> Capture "list" Text :> Get '[HTML] Html
 
 -- 'Protected' will be protected by 'auths', which we still have to specify.
 -- If we get an "Authenticated v", we can trust the information in v, since
