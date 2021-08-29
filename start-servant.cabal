@@ -78,6 +78,7 @@ library
 
       Prototype.Types
       Prototype.Types.NonEmptyText
+      Prototype.Types.Secret
 
       Prototype.Data.Examples
       Prototype.Pages.Home
