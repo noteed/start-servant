@@ -47,7 +47,7 @@ homePage Nothing = H.div $ do
     "be used to prototype a classical three-tier web application (where STM "
     "replaces a traditional relational database)."
 
-  H.p $
+  H.p
     "Please sign in."
 
   thisPage
