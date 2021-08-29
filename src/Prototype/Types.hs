@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE
@@ -15,6 +16,7 @@ import           Data.Aeson                     ( FromJSON
 import           GHC.Generics                   ( Generic )
 import           Prototype.ACL
 import           Prototype.Types.NonEmptyText
+import           Prototype.Types.Secret
 import           Servant.API                    ( FromHttpApiData
                                                 , ToHttpApiData
                                                 )
@@ -135,7 +137,7 @@ instance GroupedGrantee User where
 -- it).
 data Credentials = Credentials
   { username :: Namespace
-  , password :: Text
+  , password :: Secret '[ 'ToJSONExp] Text -- ^ Password, as secret.
   }
   deriving (Eq, Show, Generic)
 

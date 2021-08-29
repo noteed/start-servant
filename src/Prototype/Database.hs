@@ -4,6 +4,7 @@
 
 module Prototype.Database where
 
+import Prototype.Types.Secret 
 import Prelude hiding (Handle, toList)
 import Data.List (nub, sort)
 import Data.Maybe (catMaybes)
@@ -186,7 +187,7 @@ authenticateProfile credentials profiles = case filter f profiles of
   where
   f (pw, profile) =
     namespace (profile :: Profile) == username (credentials :: Credentials) &&
-    pw == password (credentials :: Credentials)
+    Secret pw == password (credentials :: Credentials)
 
 -- Convert a User (taken from a signed cookie) to a Profile.
 lookupProfile :: User -> [(Text, Profile)] -> Maybe Profile
