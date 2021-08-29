@@ -25,7 +25,14 @@ import           Servant.API                    ( FromHttpApiData
 
  -- | ID of a group.
 newtype GroupId = GroupId { _unGroupId :: NE.NonEmptyText }
-                deriving (Eq, Show, Ord, ToJSON, FromJSON, ToHttpApiData, FromHttpApiData) via NE.NonEmptyText
+                deriving ( Eq
+                         , Show
+                         , Ord
+                         , ToJSON
+                         , FromJSON
+                         , ToHttpApiData
+                         , FromHttpApiData
+                         ) via NE.NonEmptyText
 
 makeLenses ''GroupId
 
@@ -36,7 +43,7 @@ data TagGrant =
   | TagOwn  -- ^ Own a tag itself; owning a tag gives a grantee all permissions over the tagged objects
             -- with the particular tag. 
   deriving (Eq, Show, Generic, Ord, Hashable)
-  deriving anyclass (ToJSON, FromJSON)
+  deriving anyclass (ToJSON, FromJSON, ToJSONKey, FromJSONKey)
 
 -- | A Tag, on the other hand, is an arbitrary identifier that can be
 -- attached to resources. The combination of a tag and a grant define the ACL of the resource.
