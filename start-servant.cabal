@@ -5,6 +5,27 @@ category:           web
 extra-source-files:
     README.md
 
+common common-extensions
+  default-language: Haskell2010
+  default-extensions:
+    DeriveGeneric
+    DerivingVia
+    FlexibleContexts
+    FlexibleInstances
+    GADTs
+    InstanceSigs
+    LambdaCase
+    MultiParamTypeClasses
+    NamedFieldPuns
+    OverloadedStrings
+    PackageImports
+    RecordWildCards
+    ScopedTypeVariables
+    TupleSections
+    TypeApplications
+    ViewPatterns
+    TypeApplications
+
 -- Common language settings
 common lang-settings
   default-language: Haskell2010
@@ -18,8 +39,8 @@ common lang-settings
 -- So far, I've omitted most version bounds, they can be generated using `nix-shell --run 'cabal freeze'`
 common common-dependencies
   build-depends:
-      -- base (TODO: replace with base-noprelude and use Prelude from Protolude (as mixin))
       base-noprelude >=4.7 && <5
+    , protolude
 
     -- servant "core" (& server)
     , servant
@@ -40,17 +61,20 @@ common common-dependencies
 
     -- DB/storage
     , stm
-    , stm-containers 
-    , containers 
+    , stm-containers
+    , containers
+
+    -- Characters
+    , text
 
     -- Control
     , list-t
     , mtl
+    , lens
 
     -- Server
     , wai
     , warp
-    , protolude
 
 library
   import: common-dependencies, lang-settings
@@ -69,9 +93,17 @@ library
       Prototype.Server.Auth
 
       Prototype.Types
+      Prototype.Types.NonEmptyText
 
       Prototype.Data.Examples
       Prototype.Pages.Home
+
+      -- Permissions
+      Prototype.ACL
+      Prototype.ACL.Types
+
+      -- Grantees of permissions
+      Prototype.Grantee.Group
 
 executable start-servant
   import: common-dependencies, lang-settings
