@@ -14,19 +14,35 @@ import           Prototype.Types.Secret
 
 --------------------------------------------------------------------------------
 
+-- * Groups
+
 groupBackendEng = GroupId "backend-eng-group"
+
+-- * Users/Profiles
+
+-- ** Namespaces
+
+nsAlice = Namespace "alice"
 
 users :: [(Secret '[] Text, Profile)]
 users = [("secret", profAlice)]
 
-profAlice = Profile "alice"
+profAlice = Profile nsAlice
                     "alice@example.com"
                     "Alice"
                     [groupBackendEng]
                     [(TagOwn, [tagEng]), (TagRead, [tagAccounting])]
 
+
+-- * Tags
+
 tagEng = Tag "engineering"
 tagAccounting = Tag "accounting"
+
+
+-- * Resources
+
+-- ** TodoLists
 
 todoLists :: [(Text, TodoList)]
 todoLists =
@@ -38,4 +54,4 @@ todoLists =
   ]
 
 namespaceTodoLists :: [(Namespace, [TodoListId])]
-namespaceTodoLists = [("alice", ["TL-1"])]
+namespaceTodoLists = [(nsAlice, ["TL-1"])]
