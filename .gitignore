@@ -5,3 +5,5 @@
 /src/.dir-locals.el
 /dist/
 /TAGS
+/.direnv/
+/.envrc

@@ -3,16 +3,13 @@
 
 module Prototype.Server.Auth where
 
-import Control.Concurrent.STM (atomically, newTVarIO, readTVar, writeTVar, TVar)
+import Control.Concurrent.STM (atomically)
 import Control.Monad.Trans (liftIO)
-import Data.Aeson (FromJSON, ToJSON)
-import GHC.Generics (Generic)
 import Servant
 import Servant.Auth.Server
-import Web.FormUrlEncoded (FromForm)
 
 import qualified Prototype.Database as Database
-import Prototype.Types (Credentials, Profile(..), User(..))
+import Prototype.Types (Credentials)
 
 
 --------------------------------------------------------------------------------

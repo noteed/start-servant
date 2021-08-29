@@ -70,7 +70,7 @@ protected database result =
     Servant.Auth.Server.Authenticated user -> do
       mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
       case mprofile of
-        Just profile -> do
+        Just profile -> 
           return $ document (Just profile) "start-servant" $ Pages.homePage (Just profile)
         _ -> throwAll err404
              -- ^ If the user is authenticated, a profile must exists, so
@@ -83,7 +83,7 @@ protected database result =
     Servant.Auth.Server.Authenticated user -> do
       mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
       case mprofile of
-        Just profile -> do
+        Just profile -> 
           return $ document' "start-servant" $ loginPage (Just profile)
         _ -> throwAll err404
              -- ^ If the user is authenticated, a profile must exists, so
@@ -122,22 +122,22 @@ protected database result =
         mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
         case mprofile of
           Just profile ->
-            return $ document (Just profile) "start-servant" $ databaseIndex
+            return $ document (Just profile) "start-servant" databaseIndex
           _ -> throwAll err404
       )
-      :<|> (\namespace -> do
+      :<|> (\namespace' -> do
         -- TODO ^ Validate the namespace, maybe create a custom Capture type ?
         mprofileAndLists <- liftIO . atomically $
-          Database.getProfileAndLists database namespace
+          Database.getProfileAndLists database namespace'
 
         case mprofileAndLists of
           Just (profile, lists) ->
             return $ document (Just profile) "start-servant" $ namespaceIndex profile lists
           Nothing -> throwAll err404)
-      :<|> (\namespace listname -> do
+      :<|> (\namespace' listname -> do
         -- TODO ^ Validate the namespace, maybe create a custom Capture type ?
         mprofileAndList <- liftIO . atomically $
-          Database.getProfileAndList database namespace listname
+          Database.getProfileAndList database namespace' listname
 
         case mprofileAndList of
           Just (profile, list) ->
@@ -154,10 +154,10 @@ bumpCounter database = do
   liftIO . atomically $ Database.apply database op
   return NoContent
 
-getSessions database = do
+getSessions database = 
   liftIO . atomically $ Database.getSessions database
 
-getProfiles database = do
+getProfiles database = 
   liftIO . atomically $ Database.getProfiles database
 
 getAllTodoLists database = do
