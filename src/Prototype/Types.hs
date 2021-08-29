@@ -37,25 +37,18 @@ data TodoList = TodoList
   , tlItems :: [TodoItem]
   }
   deriving (Show, Read, Generic)
-
-instance ToJSON TodoList
-instance FromJSON TodoList
+  deriving anyclass (ToJSON, FromJSON)
 
 data TodoItem = TodoItem
   { tiDescription :: Text
   , tiState       :: TodoState
   }
   deriving (Show, Read, Generic)
-
-instance ToJSON TodoItem
-instance FromJSON TodoItem
+  deriving anyclass (ToJSON, FromJSON)
 
 data TodoState = Todo | InProgress | Done
   deriving (Show, Read, Generic)
-
-instance ToJSON TodoState
-instance FromJSON TodoState
-
+  deriving anyclass (ToJSON, FromJSON)
 
 --------------------------------------------------------------------------------
 data Operation = BumpCounter
@@ -109,10 +102,7 @@ instance ToMarkup Profile where
 -- Keep track of a logged in user. This must match a cookie with a User in it.
 newtype Session = Session { username :: Namespace }
   deriving (Eq, Generic, Ord)
-
-instance ToJSON Session
-instance FromJSON Session
-
+  deriving anyclass (ToJSON, FromJSON)
 
 --------------------------------------------------------------------------------
 -- The signed data we write to/read from cookies. Should not be used outside
@@ -140,8 +130,4 @@ data Credentials = Credentials
   , password :: Secret '[ 'ToJSONExp] Text -- ^ Password, as secret.
   }
   deriving (Eq, Show, Generic)
-
-instance ToJSON Credentials
-instance FromJSON Credentials
-
-instance FromForm Credentials
+  deriving anyclass (ToJSON, FromJSON, FromForm)
