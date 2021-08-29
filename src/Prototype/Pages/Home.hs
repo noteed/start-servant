@@ -33,7 +33,7 @@ homePage (Just Profile {..}) = H.div $ do
     "."
 
   H.ul $ do
-    H.li $ H.a ! A.href (H.toValue $ "/" ++ namespace) $ "Your profile"
+    H.li $ H.a ! A.href (H.toValue $ "/" <> namespace) $ "Your profile"
     H.li $ H.a ! A.href "/settings/profile" $ "Settings"
     H.li $ H.a ! A.href "/database" $ "Database"
 

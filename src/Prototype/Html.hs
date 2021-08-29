@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -50,7 +51,7 @@ nav (Just Profile {..}) = H.div $
   H.ul $ do
     H.li $ H.a ! A.href "/" $ "Home"
     H.li $ H.toHtml namespace
-    H.li $ H.a ! A.href (H.toValue $ "/" ++ namespace) $ "Your profile"
+    H.li $ H.a ! A.href (H.toValue $ "/" <> namespace) $ "Your profile"
     H.li $ H.a ! A.href "/settings/profile" $ "Settings"
     H.li $ H.a ! A.href "/logout" $ "Sign out"
 
@@ -76,7 +77,7 @@ profilePage profile = H.div $ do
 loginPage :: Maybe Profile -> Html
 
 loginPage (Just Profile {..}) = H.div $
-  H.toHtml ("Hi " ++ namespace ++ ", you're already logged in.")
+  H.toHtml ("Hi " <> namespace <> ", you're already logged in.")
 
 loginPage Nothing = H.div $ do
   H.h1 "Sign in"
@@ -124,21 +125,21 @@ namespaceIndex profile lists = H.div $ do
     H.toHtml (namespace profile)
   H.ul $
     forM_ lists $ \TodoList {..} ->
-      H.li $ H.a ! A.href (H.toValue $ "/" ++ namespace profile ++ "/" ++ tlName) $
+      H.li $ H.a ! A.href (H.toValue $ "/" <> namespace profile <> "/" <> tlName) $
         H.toHtml tlName
 
 
 --------------------------------------------------------------------------------
 todoListIndex :: Profile -> TodoList -> Html
-todoListIndex profile list = H.div $ do
+todoListIndex profile list' = H.div $ do
   H.h1 "Namespace index page"
   H.div . H.code $ do
     H.toHtml (namespace profile)
     " / "
-    H.toHtml (tlName list)
+    H.toHtml (tlName list')
   H.ul $
-    forM_ (tlItems list) $ \TodoItem {..} ->
+    forM_ (tlItems list') $ \TodoItem {..} ->
       H.li $ do
         H.toHtml tiDescription
         " - "
-        H.toHtml (show tiState)
+        H.toHtml @Text (show tiState)

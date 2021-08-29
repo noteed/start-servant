@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
@@ -16,7 +17,7 @@ import Prototype.Types (Credentials)
 -- This is the login handler. We create a cookie with a User content, signed by
 -- our key. Later, in a Auth protected route, we can retrieve it.
 login :: Database.Handle -> CookieSettings -> JWTSettings -> Credentials
-  -> Handler (Headers '[ Header "Location" String
+  -> Handler (Headers '[ Header "Location" Text
                        , Header "Set-Cookie" SetCookie
                        , Header "Set-Cookie" SetCookie]
                       NoContent)

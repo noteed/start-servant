@@ -19,7 +19,7 @@ common lang-settings
 common common-dependencies
   build-depends:
       -- base (TODO: replace with base-noprelude and use Prelude from Protolude (as mixin))
-      base >=4.7 && <5
+      base-noprelude >=4.7 && <5
 
     -- servant "core" (& server)
     , servant
@@ -50,6 +50,7 @@ common common-dependencies
     -- Server
     , wai
     , warp
+    , protolude
 
 library
   import: common-dependencies, lang-settings
@@ -58,6 +59,9 @@ library
     -- Extra servant packages
       servant-auth
   exposed-modules:
+
+      Prelude
+
       Prototype.Database
       Prototype.Html
 
