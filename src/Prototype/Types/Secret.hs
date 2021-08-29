@@ -3,12 +3,6 @@
   , TypeOperators
   , UndecidableInstances
 #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE
     TypeSynonymInstances
   , FlexibleInstances
@@ -22,7 +16,12 @@
   , GeneralizedNewtypeDeriving
   , StandaloneDeriving
 #-}
-
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 module Prototype.Types.Secret
   ( Secret(..)
   , SecretExp(..)
@@ -96,7 +95,7 @@ makeLenses ''Secret
 
 -- | An instance that only reveals the type-information of the value held by a secret. 
 instance Typeable s => Show (Secret exp s) where
-  show (Secret (_ :: s)) = "Secret :: " <> show (typeRep (Proxy @s))
+  show (Secret (_ :: s)) = "Secret :: " <> show (typeRep $ Proxy @s)
 
 -- | Secrets that can be exposed via ToJSON 
 deriving via s instance (ToJSON s, HasExp 'ToJSONExp exps) => ToJSON (Secret exps s)
