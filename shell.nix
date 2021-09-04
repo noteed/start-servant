@@ -22,7 +22,11 @@ let
   # Add more as we need them.
   formatters = [ brittany ];
 
+  system-tooling = with nixpkgs; [ inotify-tools # needed for HotExe.sh (filesystem notifs.)
+                                   psmisc # needed for HotExe.sh: (kill processes by port.)
+                                 ] ;
+
 in hp.shellFor {
   packages = p: with p; [ start-servant ];
-  buildInputs = nix-tooling ++ haskell-tooling ++ formatters;
+  buildInputs = nix-tooling ++ haskell-tooling ++ system-tooling ++ formatters;
 }
