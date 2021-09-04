@@ -2,6 +2,8 @@
 
 module Main (main) where
 
+import qualified Parse
+import qualified Prototype.Runtime as Rt
 import Network.Wai.Handler.Warp (run)
 import Servant
 import Servant.Auth.Server
@@ -11,6 +13,7 @@ import Crypto.JOSE.JWK (fromKeyMaterial)
 import Crypto.JOSE.JWA.JWK (KeyMaterial(OctKeyMaterial), OctKeyParameters(..))
 import Crypto.JOSE.Types (Base64Octets(..))
 
+import qualified Options.Applicative as A
 import qualified Prototype.Runtime.StmDatabase as Database (newHandle)
 import Prototype.Server (api, server)
 
@@ -23,6 +26,8 @@ port = 7249
 --------------------------------------------------------------------------------
 main :: IO ()
 main = do
+  confInMode <- A.execParser Parse.parseFullConf
+  putStrLn @Text $ "Starting up: " <> show confInMode
   -- This could be taken form disk, or hard-coded here, to keep existing
   -- sessions alive.
   key <- generateKey
