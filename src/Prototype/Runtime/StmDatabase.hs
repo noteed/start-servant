@@ -49,8 +49,9 @@ data Handle = Handle
 
 
 --------------------------------------------------------------------------------
-newHandle :: IO Handle
-newHandle = atomically $ do
+-- | Generate a new STM based storage.
+newHandle :: MonadIO m => m Handle
+newHandle = liftIO . atomically $ do
   hCounter <- newCounter
   hSessions <- newSessions
   hUsers <- newUsers
