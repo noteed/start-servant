@@ -8,6 +8,8 @@ and this module is meant to add more such re-exports as necessary as the project
 -}
 module Prelude
   ( module Proto
+  , module Def
   ) where
 
-import Protolude as Proto 
+import           Data.Default.Class            as Def
+import           Protolude                     as Proto
