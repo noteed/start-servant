@@ -79,13 +79,14 @@ common common-dependencies
     -- Logging 
     , monad-log 
 
+    -- Default instances for configuration etc. 
+   , data-default-class
 library
   import: common-dependencies, lang-settings, common-extensions
   hs-source-dirs: src
   build-depends:
     -- Extra servant packages
       servant-auth
-    , data-default-class
   exposed-modules:
 
       Prelude 
