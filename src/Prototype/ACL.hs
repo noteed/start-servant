@@ -39,6 +39,7 @@ class Resource r where
 
 -- | Operations on some resource in some @m@
 class Resource r => ResourceOps m r where
+
   -- | Tag a resource with a set of additional tags/add tags to resource
   tagResource :: r -> Set Tag -> m r
 

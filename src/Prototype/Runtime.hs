@@ -12,6 +12,8 @@ module Prototype.Runtime
   , cAppName
   , cLogLevel
   , cServerPort
+  , cCookieSettings
+  , cMkJwtSettings
   , AppMode(..)
   , AppName(..)
   , showAppName
@@ -33,11 +35,14 @@ module Prototype.Runtime
 
 import           Control.Lens
 import           Control.Monad.Log             as L
+import qualified Crypto.JOSE.JWK               as JWK
 import qualified Data.String                   as Str
 import qualified Data.Text                     as T
+import qualified GHC.Show        -- Needed for handwritten Show instance for Conf 
 import           Prelude                 hiding ( Handle )
 import           Prototype.Runtime.Errors
 import           Prototype.Runtime.StmDatabase as Db
+import qualified Servant.Auth.Server           as Srv
 
 -- | An application name: lets us group logging etc. with @/@ as separators.
 newtype AppName = AppName { _unAppName :: [Text] }
@@ -56,19 +61,42 @@ instance IsString AppName where
   fromString = AppName . T.splitOn "/" . T.pack
 
 data Conf = Conf
-  { _cAppName    :: AppName -- ^ Application name 
-  , _cLogLevel   :: L.Level -- ^ The logging level 
-  , _cServerPort :: Int -- ^ The port number to run the server on 
+  { _cAppName        :: AppName -- ^ Application name 
+  , _cLogLevel       :: L.Level -- ^ The logging level 
+  , _cServerPort     :: Int -- ^ The port number to run the server on 
+  , _cCookieSettings :: Srv.CookieSettings -- ^ Cookie settings to use 
+  , _cMkJwtSettings  :: JWK.JWK -> Srv.JWTSettings -- ^ JWK settings to use. 
   }
-  deriving (Eq, Show)
 
 makeLenses ''Conf
 
+instance Show Conf where
+  show Conf {..} =
+    T.unpack
+      . T.intercalate "\n\t"
+      $ [ "\tappName = " <> showAppName _cAppName
+        , "logLevel = " <> show _cLogLevel
+        , "serverPort = " <> show _cServerPort
+        , "cookieSettings = " <> show _cCookieSettings
+        ]
+
 instance Default Conf where
-  def = Conf { _cAppName    = "start-servant"
-             , _cLogLevel   = L.levelDebug
-             , _cServerPort = 7249
-             }
+  def = Conf
+    { _cAppName        = "start-servant"
+    , _cLogLevel       = L.levelDebug
+    , _cServerPort     = 7249
+    -- Disable XSRF Cookie (otherwise, this needs some logic instead of
+    -- simple cURL calls):
+    -- https://github.com/haskell-servant/servant-auth/issues/55#issuecomment-747046527
+    -- Using Secure with Same-Site=Strict would be good enough ?
+    , _cCookieSettings = Srv.defaultCookieSettings
+                           { Srv.cookieIsSecure    = Srv.NotSecure
+            -- ^ Use temporarily NotSecure for easier local testing with cURL.
+                           , Srv.cookieXsrfSetting = Nothing
+                           , Srv.cookieSameSite    = Srv.SameSiteStrict
+                           }
+    , _cMkJwtSettings  = Srv.defaultJWTSettings
+    }
 
 data AppMode = Stm | Postgres
              deriving (Eq, Show)
@@ -118,9 +146,9 @@ bootStm _rConf@Conf {..} = do
     -- Instantiate storage 
     L.info "Instantiating storage"
     _rStorage <- liftIO Db.newHandle
-    pure . Right $ Runtime { .. }
+    L.info "Booted!" $> Right Runtime { .. }
  where
-  bootEnv      = L.localEnv (<> "Boot")
+  bootEnv      = L.localEnv (<> "Boot" <> "STM")
   createLogger = L.makeDefaultLogger L.simpleTimeFormat
                                      (L.LogStdout 1024)
                                      _cLogLevel
