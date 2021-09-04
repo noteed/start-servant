@@ -19,6 +19,7 @@ common common-extensions
     FlexibleContexts
     UndecidableInstances
     LambdaCase
+    TypeApplications 
 
 -- Common language settings
 common lang-settings
@@ -62,6 +63,9 @@ common common-dependencies
 
     -- Characters 
     , text 
+    
+    -- TextShow instance for AppName (required for logging)
+    , text-show 
 
     -- Control
     , list-t
@@ -81,6 +85,7 @@ library
   build-depends:
     -- Extra servant packages
       servant-auth
+    , data-default-class
   exposed-modules:
 
       Prelude 
@@ -115,5 +120,8 @@ executable start-servant
   build-depends:
      -- our dependencies
      start-servant
+     -- Parse cli arguments. 
+   , optparse-applicative 
   hs-source-dirs:   bin
   other-modules:
+      Parse 
