@@ -8,12 +8,7 @@ import qualified Parse
 import qualified Prototype.Runtime as Rt 
 import Network.Wai.Handler.Warp (run)
 import Servant
-import Servant.Auth.Server
-
--- For hard-coded key.
-import Crypto.JOSE.JWK (fromKeyMaterial)
-import Crypto.JOSE.JWA.JWK (KeyMaterial(OctKeyMaterial), OctKeyParameters(..))
-import Crypto.JOSE.Types (Base64Octets(..))
+import qualified Servant.Auth.Server as Srv
 
 import qualified Options.Applicative as A 
 import Prototype.Server (api, server)
@@ -46,7 +41,7 @@ stmLifecycle conf@Rt.Conf{..} = do
   L.runLogT' _rLogger $ do  
     -- This could be taken form disk, or hard-coded here, to keep existing
     -- sessions alive.
-    key <- liftIO generateKey
+    key <- liftIO Srv.generateKey
     -- let key = fromKeyMaterial (OctKeyMaterial (OctKeyParameters (Base64Octets "aa")))
 
     let jwtSettings = _cMkJwtSettings key
