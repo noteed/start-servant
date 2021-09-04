@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -164,9 +165,16 @@ bootStm _rConf@Conf {..} = do
 
 -- | Given we're operating in an Stm based environment, how do we carry out user operations?
 instance S.DBStorage StmAppM Ptypes.User where
-  dbUpdate = undefined
-  dbSelect sel = withHandle $ case sel of
+
+  -- All of these are stubs that should be implemented.
+  dbUpdate up = withStorage $ case up of
+    CreateNewUser  u     -> undefined
+    DeactivateUser uid   -> undefined
+    AddToGroups uid gids -> undefined
+
+  dbSelect sel = withStorage $ case sel of
     AuthUser creds -> liftIO . fmap toList . atomically . (`login` creds)
-    where
-      -- Get the storage handle, and give it to the function that does something with it.
-          withHandle f = asks _rStorage >>= f
+
+-- | Get the storage handle, and give it to the function that does something with it.
+withStorage :: forall a mode . (ModeStorage mode -> AppM mode a) -> AppM mode a
+withStorage f = asks _rStorage >>= f
