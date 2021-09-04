@@ -21,6 +21,10 @@ module Prototype.Types
   , Credentials(..)
   , User(..)
   , Session(..)
+
+  -- * User operations
+  , S.DBSelect(..)
+  , S.DBUpdate(..)
   ) where
 
 import           Data.Aeson                     ( FromJSON

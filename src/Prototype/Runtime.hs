@@ -40,7 +40,8 @@ import           Control.Monad.Log             as L
 import qualified Crypto.JOSE.JWK               as JWK
 import qualified Data.String                   as Str
 import qualified Data.Text                     as T
-import qualified GHC.Show           -- Needed for handwritten Show instance for Conf 
+-- Needed for handwritten Show instance for Conf 
+import qualified GHC.Show
 import           Prelude                 hiding ( Handle )
 import           Prototype.Runtime.Errors
 import           Prototype.Runtime.StmDatabase as Db
@@ -164,4 +165,8 @@ bootStm _rConf@Conf {..} = do
 -- | Given we're operating in an Stm based environment, how do we carry out user operations?
 instance S.DBStorage StmAppM Ptypes.User where
   dbUpdate = undefined
-  dbSelect = undefined
+  dbSelect sel = withHandle $ case sel of
+    AuthUser creds -> liftIO . fmap toList . atomically . (`login` creds)
+    where
+      -- Get the storage handle, and give it to the function that does something with it. 
+          withHandle f = asks _rStorage >>= f
