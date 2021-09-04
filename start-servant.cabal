@@ -115,6 +115,9 @@ library
       Prototype.Runtime.StmDatabase
       Prototype.Runtime.Errors
 
+      -- Abstract storage
+      Prototype.Runtime.Storage
+
 executable start-servant
   import: common-dependencies, lang-settings, common-extensions
   main-is:          serve.hs
