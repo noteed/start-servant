@@ -10,12 +10,18 @@ import qualified Prototype.Runtime as Rt
 import qualified Options.Applicative as A
 
 -- | Parse any configuration irrespective of the mode we're running in.
+-- TODO: proper parsers for _cCookieSettings, _cJwtSettings
 parseConf :: A.Parser Rt.Conf
 parseConf = do
   _cAppName <- appName
   _cLogLevel <- logLevel
   _cServerPort <- serverPort
-  pure Rt.Conf {..}
+
+
+  pure Rt.Conf { _cCookieSettings = Rt._cCookieSettings def
+               , _cMkJwtSettings = Rt._cMkJwtSettings def
+               , ..
+               }
   where
     appName = A.strOption
       $ A.long "application-name"
