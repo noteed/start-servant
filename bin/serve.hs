@@ -46,7 +46,7 @@ stmLifecycle conf@Rt.Conf{..} = do
   L.runLogT' _rLogger $ do  
     -- This could be taken form disk, or hard-coded here, to keep existing
     -- sessions alive.
-    key <- liftIO $ generateKey
+    key <- liftIO generateKey
     -- let key = fromKeyMaterial (OctKeyMaterial (OctKeyParameters (Base64Octets "aa")))
 
     let jwtSettings = _cMkJwtSettings key
