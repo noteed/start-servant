@@ -28,6 +28,8 @@ module Prototype.Runtime
   , rLogger
   -- * Control
   , AppM(..)
+  , PostgresAppM
+  , StmAppM
   -- * Booting in specific modes.
   -- TODO: add postgres mode in the future.
   , bootStm
@@ -38,10 +40,12 @@ import           Control.Monad.Log             as L
 import qualified Crypto.JOSE.JWK               as JWK
 import qualified Data.String                   as Str
 import qualified Data.Text                     as T
-import qualified GHC.Show        -- Needed for handwritten Show instance for Conf
+import qualified GHC.Show           -- Needed for handwritten Show instance for Conf
 import           Prelude                 hiding ( Handle )
 import           Prototype.Runtime.Errors
 import           Prototype.Runtime.StmDatabase as Db
+import qualified Prototype.Runtime.Storage     as S
+import           Prototype.Types               as Ptypes
 import qualified Servant.Auth.Server           as Srv
 
 -- | An application name: lets us group logging etc. with @/@ as separators.
@@ -133,6 +137,9 @@ newtype AppM (mode :: AppMode) a
            , MonadError RuntimeErr
            )
 
+type StmAppM = AppM 'Stm
+type PostgresAppM = AppM 'Postgres
+
 instance L.MonadLog AppName (AppM mode) where
   askLogger = asks _rLogger
   localLogger f = local $ over rLogger f
@@ -153,3 +160,8 @@ bootStm _rConf@Conf {..} = do
                                      (L.LogStdout 1024)
                                      _cLogLevel
                                      _cAppName
+
+-- | Given we're operating in an Stm based environment, how do we carry out user operations?
+instance S.DBStorage StmAppM Ptypes.User where
+  dbUpdate = undefined
+  dbSelect = undefined
