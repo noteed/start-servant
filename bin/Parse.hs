@@ -3,6 +3,7 @@ module Parse
   ( parseConf
   , parseConfInMode
   , parseFullConf
+  , ConfInMode(..)
   ) where
 
 import qualified Prototype.Runtime as Rt
