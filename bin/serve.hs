@@ -11,7 +11,7 @@ import Crypto.JOSE.JWK (fromKeyMaterial)
 import Crypto.JOSE.JWA.JWK (KeyMaterial(OctKeyMaterial), OctKeyParameters(..))
 import Crypto.JOSE.Types (Base64Octets(..))
 
-import qualified Prototype.Database as Database (newHandle)
+import qualified Prototype.Runtime.StmDatabase as Database (newHandle)
 import Prototype.Server (api, server)
 
 
