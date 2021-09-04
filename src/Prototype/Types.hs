@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -27,6 +28,7 @@ import           Data.Aeson                     ( FromJSON
                                                 )
 import           GHC.Generics                   ( Generic )
 import           Prototype.ACL
+import qualified Prototype.Runtime.Storage     as S
 import           Prototype.Types.NonEmptyText
 import           Prototype.Types.Secret
 import           Servant.API                    ( FromHttpApiData
@@ -133,6 +135,19 @@ data User = User
   }
   deriving (Eq, Show, Generic)
   deriving anyclass (ToJSON, FromJSON, ToJWT, FromJWT)
+
+instance S.DBIdentity User where
+  type DBId User = Namespace
+  dbId = username
+
+instance S.DBStorageOps User where
+  -- | Kinds of manipulating operations that can be performed on users. 
+  data DBUpdate User = CreateNewUser User
+                     | DeactivateUser Namespace
+                     | AddToGroups (Set GroupId)
+  
+  -- | Ways to select user(s)
+  data DBSelect User = AuthUser Credentials
 
 -- TODO: A user is a grantee, and an user may belong to groups. 
 instance Grantee User where
