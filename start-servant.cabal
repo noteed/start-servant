@@ -93,8 +93,8 @@ library
 
       Prototype.Html
 
-      Prototype.Server
-      Prototype.Server.Auth
+      Prototype.Server.Legacy
+      Prototype.Server.Legacy.Auth
 
       Prototype.Types
       Prototype.Types.NonEmptyText

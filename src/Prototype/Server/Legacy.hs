@@ -2,7 +2,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Prototype.Server ( api
+module Prototype.Server.Legacy ( api
                         , server
                         , protected
                         , Protected
@@ -22,7 +22,7 @@ import Prototype.Html
   , profilePage, todoListIndex)
   -- And also for ToMarkup instances.
 import qualified Prototype.Pages.Home as Pages
-import Prototype.Server.Auth
+import Prototype.Server.Legacy.Auth
 import Prototype.Types
 
 
