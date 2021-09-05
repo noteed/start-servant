@@ -15,7 +15,9 @@ module Prototype.Runtime
   , cServerPort
   , cCookieSettings
   , cMkJwtSettings
+  , cServerMode
   , AppMode(..)
+  , ServerMode(..)
   , AppName(..)
   , showAppName
   , unAppName
@@ -66,12 +68,27 @@ makeLenses ''AppName
 instance IsString AppName where
   fromString = AppName . T.splitOn "/" . T.pack
 
+{- | Server modes
+
+== Legacy
+Starts with using the existing implementation at the time of writing: here all operations run in IO
+
+== New
+Starts using the `AppM` stacks; in a given `Stm` or `Postgres` mode.
+-}
+data ServerMode = Legacy | New
+                deriving (Eq, Show, Read)
+
+instance Default ServerMode where
+  def = Legacy
+
 data Conf = Conf
   { _cAppName        :: AppName -- ^ Application name
   , _cLogLevel       :: L.Level -- ^ The logging level
   , _cServerPort     :: Int -- ^ The port number to run the server on
   , _cCookieSettings :: Srv.CookieSettings -- ^ Cookie settings to use
   , _cMkJwtSettings  :: JWK.JWK -> Srv.JWTSettings -- ^ JWK settings to use.
+  , _cServerMode     :: ServerMode  -- ^ Server mode to start in
   }
 
 makeLenses ''Conf
@@ -84,6 +101,7 @@ instance Show Conf where
         , "logLevel = " <> show _cLogLevel
         , "serverPort = " <> show _cServerPort
         , "cookieSettings = " <> show _cCookieSettings
+        , "serverMode = " <> show _cServerMode
         ]
 
 instance Default Conf where
@@ -102,6 +120,7 @@ instance Default Conf where
                            , Srv.cookieSameSite    = Srv.SameSiteStrict
                            }
     , _cMkJwtSettings  = Srv.defaultJWTSettings
+    , _cServerMode     = def
     }
 
 data AppMode = Stm | Postgres

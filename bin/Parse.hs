@@ -16,6 +16,7 @@ parseConf = do
   _cAppName <- appName
   _cLogLevel <- logLevel
   _cServerPort <- serverPort
+  _cServerMode <- serverMode
 
 
   pure Rt.Conf { _cCookieSettings = Rt._cCookieSettings def
@@ -46,6 +47,15 @@ parseConf = do
       <> A.metavar "PORT"
       <> A.value (Rt._cServerPort def)
       <> A.showDefault
+
+    serverMode = A.option (A.eitherReader readEither)
+      $  A.long "server-mode"
+      <> A.short 'M'
+      <> A.help "Server mode to run in, see `Prototype.Runtime.ServerMode` for docs."
+      <> A.metavar "SERVER_MODE"
+      <> A.value (Rt._cServerMode def)
+      <> A.showDefault
+
 
 -- | A sum type indicating which mode the user has indicated to run the application in.
 data ConfInMode =
