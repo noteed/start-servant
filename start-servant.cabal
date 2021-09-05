@@ -81,6 +81,7 @@ common common-dependencies
 
     -- Default instances for configuration etc.
    , data-default-class
+   , template-haskell
 library
   import: common-dependencies, lang-settings, common-extensions
   hs-source-dirs: src
@@ -117,6 +118,10 @@ library
 
       -- Abstract storage
       Prototype.Runtime.Storage
+
+      -- Functions to get the current module, etc.
+      Prototype.Module
+
 
 executable start-servant
   import: common-dependencies, lang-settings, common-extensions

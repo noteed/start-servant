@@ -1,8 +1,10 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-} -- For hard-coded key.
 
 module Main (main) where
 
+import Prototype.Module
 import qualified Prototype.Runtime.Errors as Errs
 import Control.Monad.Fail (MonadFail) -- needed for pattern matching on LHS inside do blocks.
 import qualified Data.Text as T
@@ -21,18 +23,24 @@ import Prototype.Server.Legacy (api, server)
 port :: Int
 port = 7249
 
-
 --------------------------------------------------------------------------------
 main :: IO ()
 main = do
   confInMode <- A.execParser Parse.parseFullConf
-  outputConf confInMode
+  outputConfAndModule confInMode
   -- TODO: Handle the error case
   case confInMode of
     Parse.ConfStmMode conf -> stmLifecycle conf
     -- TODO add others.
     _ -> putStrLn @Text "Only STM mode supported for now!" >> exitFailure
   where
+
+    outputConfAndModule conf = do
+      -- Get the information about the current module using some top level "value" in the module.
+      let currentModule = moduleOf 'main
+      putStrLn @Text $ "Current module: " <> show currentModule
+      outputConf conf
+
     outputConf = putStrLn . \case
       Parse.ConfStmMode conf ->
         T.unlines [ "STM-Mode:" , show conf ]
