@@ -1,3 +1,4 @@
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 module Prototype.Runtime.Errors
@@ -5,6 +6,7 @@ module Prototype.Runtime.Errors
   , IsRuntimeErr(..)
   ) where
 
+import qualified Data.Text as T
 import qualified Network.HTTP.Types            as HTTP
 
 -- | A generalised error
@@ -32,6 +34,12 @@ class IsRuntimeErr e where
   -- TODO: also add language code as a parameter for localisation (later)
   userMessage :: e -> Maybe Text
 
+  displayErr :: e -> Text
+  default displayErr :: Show e => e -> Text
+  displayErr e = T.unwords [ "httpStatus =", show $ httpStatus e
+                           , "userMessage =", fromMaybe "" (userMessage e)
+                           ]
+
 instance IsRuntimeErr RuntimeErr where
 
   knownErr = identity
@@ -45,3 +53,7 @@ instance IsRuntimeErr RuntimeErr where
   userMessage = \case
     KnownErr e -> userMessage e
     RuntimeException{} -> Just "Internal exception, we're sorry about that."
+
+  displayErr = \case
+    KnownErr e -> displayErr e
+    RuntimeException e -> T.unwords [ "RuntimeException" , show e, T.pack $ displayException e ]
