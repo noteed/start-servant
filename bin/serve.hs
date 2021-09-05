@@ -14,7 +14,7 @@ import Servant
 import qualified Servant.Auth.Server as Srv
 
 import qualified Options.Applicative as A 
-import Prototype.Server (api, server)
+import Prototype.Server.Legacy (api, server)
 
 
 --------------------------------------------------------------------------------
