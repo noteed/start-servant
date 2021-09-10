@@ -25,8 +25,7 @@ thisPage = pageUrl thisFile
 thisFile = "Prototype/Pages/Home.hs"
 
 pageUrl path =
-  H.a ! A.href (H.toValue $ sourceUrl ++ path) $
-    "This page on GitHub"
+  H.a ! A.href (H.toValue $ sourceUrl ++ path) $ "This page on GitHub"
 
 repositoryUrl = "https://github.com/noteed/start-servant"
 
@@ -56,7 +55,6 @@ homePage Nothing = H.div $ do
     "be used to prototype a classical three-tier web application (where STM "
     "replaces a traditional relational database)."
 
-  H.p $
-    "Please sign in."
+  H.p "Please sign in."
 
   thisPage

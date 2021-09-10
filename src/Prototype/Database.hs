@@ -189,9 +189,8 @@ getLoggedInProfile h user = do
       profiles <- getUsers h
       return $ lookupProfile user profiles
 
-
 --------------------------------------------------------------------------------
--- Convert the submitted login Credentials to a Profile.
+-- | Convert the submitted login Credentials to a Profile.
 authenticateProfile :: Credentials -> [(Text, Profile)] -> Maybe Profile
 authenticateProfile credentials profiles = case filter f profiles of
   [(_, p)] -> Just p
