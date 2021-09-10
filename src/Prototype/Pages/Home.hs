@@ -2,13 +2,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Prototype.Pages.Home where
+module Prototype.Pages.Home
+  ( thisPage
+  , thisFile
+  , pageUrl
+  , repositoryUrl
+  , sourceUrl
+  , homePage
+  ) where
 
-import Text.Blaze.Html5 (Html, (!))
-import qualified Text.Blaze.Html5 as H
-import qualified Text.Blaze.Html5.Attributes as A
+import           Text.Blaze.Html5               ( (!)
+                                                , Html
+                                                )
+import qualified Text.Blaze.Html5              as H
+import qualified Text.Blaze.Html5.Attributes   as A
 
-import Prototype.Types
+import           Prototype.Types
 
 --------------------------------------------------------------------------------
 thisPage = pageUrl thisFile

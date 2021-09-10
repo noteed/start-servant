@@ -2,7 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Prototype.Server.Auth where
+module Prototype.Server.Auth (login) where
 
 import Control.Concurrent.STM (atomically)
 import Control.Monad.Trans (liftIO)

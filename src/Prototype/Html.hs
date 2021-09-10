@@ -3,7 +3,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Prototype.Html where
+module Prototype.Html ( document, document'
+                      , page
+                      , page'
+                      , nav, shortNav, profilePage , loginPage
+                      , databaseIndex , namespaceIndex, todoListIndex
+                      ) where
 
 import Prototype.Types.NonEmptyText (nonEmptyToTextCoerce)
 import Control.Monad (forM_)

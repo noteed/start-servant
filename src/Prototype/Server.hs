@@ -2,7 +2,12 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Prototype.Server where
+module Prototype.Server ( api
+                        , server
+                        , protected
+                        , Protected
+                        , API
+                        ) where
 
 import Control.Concurrent.STM (atomically)
 import Control.Monad.Trans (liftIO)

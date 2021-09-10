@@ -2,7 +2,19 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Prototype.Database where
+module Prototype.Database (Handle(..)
+                          , newHandle
+                          , apply
+                          , getCounter, bumpCounter
+                          , getProfiles , getProfile
+                          , newCounter
+                          , login
+                          , getLoggedInProfile
+                          , getProfileAndLists
+                          , getProfileAndList
+                          , getSessions
+                          , getAllTodoLists
+                          ) where
 
 import Prototype.Types.Secret
 import Prelude hiding (Handle, toList)
