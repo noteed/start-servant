@@ -53,25 +53,21 @@ stmLifecycle conf@Rt.Conf{ _cServerMode } = case _cServerMode of
   Rt.Legacy -> stmBootAndLifecycle stmLegacyLifecycle conf
 
 stmBootAndLifecycle :: MonadIO m => (Rt.StmRuntime -> m ()) -> Rt.Conf -> m ()
-stmBootAndLifecycle lifecycle = Rt.bootStm >=> either reportErr lifecycle
+stmBootAndLifecycle lifecycle conf@Rt.Conf {..} = do
+  key <- liftIO Srv.generateKey
+  Rt.bootStm key conf >>= either reportErr lifecycle
   where
     reportErr = putStrLn @Text . mappend "Unable to boot: " . Errs.displayErr
 
 stmLegacyLifecycle :: (MonadIO m, MonadFail m) => Rt.StmRuntime -> m ()
 stmLegacyLifecycle runtime@Rt.Runtime{..} = do
   L.runLogT' _rLogger $ do
-    -- This could be taken form disk, or hard-coded here, to keep existing
-    -- sessions alive.
-    key <- liftIO Srv.generateKey
-    -- let key = fromKeyMaterial (OctKeyMaterial (OctKeyParameters (Base64Octets "aa")))
 
-    let jwtSettings = _cMkJwtSettings key
-        settings = _cCookieSettings :. jwtSettings :. EmptyContext
-
+    let settings = _cCookieSettings :. _rJwtSettings :. EmptyContext
     -- Run the server enclosed within a `try` so we can handle all exits, and gracefully shut down
     -- storage, etc.
     exitReason <- liftIO . try @SomeException . run port $ serveWithContext api settings $
-      server _rStorage _cCookieSettings jwtSettings
+      server _rStorage _cCookieSettings _rJwtSettings
     logExit runtime exitReason
   where
     Rt.Conf {..} = _rConf

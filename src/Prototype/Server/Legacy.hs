@@ -6,6 +6,7 @@ module Prototype.Server.Legacy ( api
                         , server
                         , protected
                         , Protected
+                        , Unprotected
                         , API
                         ) where
 

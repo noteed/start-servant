@@ -94,6 +94,8 @@ library
 
       Prototype.Html
 
+      Prototype.Server.New.StartPage
+                  
       Prototype.Server.Legacy
       Prototype.Server.Legacy.Auth
 

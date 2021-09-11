@@ -25,6 +25,9 @@ module Prototype.Types
   -- * User operations
   , S.DBSelect(..)
   , S.DBUpdate(..)
+
+  -- ** Errors
+  , UserErr(..)
   ) where
 
 import           Data.Aeson                     ( FromJSON
@@ -32,6 +35,7 @@ import           Data.Aeson                     ( FromJSON
                                                 )
 import           GHC.Generics                   ( Generic )
 import           Prototype.ACL
+import           Prototype.Runtime.Errors       ( IsRuntimeErr(..) )
 import qualified Prototype.Runtime.Storage     as S
 import           Prototype.Types.NonEmptyText
 import           Prototype.Types.Secret
@@ -149,7 +153,7 @@ instance S.DBStorageOps User where
   data DBUpdate User = CreateNewUser User
                      | DeactivateUser Namespace
                      | AddToGroups Namespace (Set GroupId)
-
+  
   -- | Ways to select user(s)
   data DBSelect User = AuthUser Credentials
 
@@ -168,3 +172,11 @@ data Credentials = Credentials
   }
   deriving (Eq, Show, Generic)
   deriving anyclass (ToJSON, FromJSON, FromForm)
+
+data UserErr = AuthFailed Text
+             | PermissionDenied Text
+             deriving Show
+
+instance IsRuntimeErr UserErr where
+
+

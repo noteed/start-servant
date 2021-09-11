@@ -106,7 +106,7 @@ instance Show Conf where
 instance Default Conf where
   def = Conf
     { _cAppName        = "start-servant"
-    , _cLogLevel       = levelInfo 
+    , _cLogLevel       = levelInfo
     , _cServerPort     = 7249
     -- Disable XSRF Cookie (otherwise, this needs some logic instead of
     -- simple cURL calls):
@@ -134,9 +134,10 @@ type family ModeStorage (mode :: AppMode) :: Type where
 
 -- | STM based runtime
 data Runtime (mode :: AppMode) = Runtime
-  { _rConf    :: Conf -- ^ Original configuration with which the application was started
-  , _rStorage :: ModeStorage mode -- ^ The actual storage
-  , _rLogger  :: Logger AppName -- ^ The Logger
+  { _rConf        :: Conf -- ^ Original configuration with which the application was started
+  , _rStorage     :: ModeStorage mode -- ^ The actual storage
+  , _rLogger      :: Logger AppName -- ^ The Logger
+  , _rJwtSettings :: Srv.JWTSettings  -- ^ JWT settings to use
   }
 
 makeLenses ''Runtime
@@ -165,21 +166,19 @@ instance MonadLog AppName (AppM mode) where
   localLogger f = local $ over rLogger f
 
 -- | Boot in the Stm storage mode.
-bootStm :: MonadIO m => Conf -> m (Either RuntimeErr StmRuntime)
-bootStm _rConf@Conf {..} = do
+bootStm :: MonadIO m => JWK.JWK -> Conf -> m (Either RuntimeErr StmRuntime)
+bootStm jwk _rConf@Conf {..} = do
   -- Start off by creating a logger first; we may want to log steps in the boot process.
   _rLogger <- createLogger
   runLogT' _rLogger . bootEnv $ do
     -- Instantiate storage
     infoE "Instantiating storage"
     _rStorage <- liftIO Db.newHandle
-    info "Booted!" $> Right Runtime { .. }
+    info "Booted" $> Right Runtime { _rJwtSettings = _cMkJwtSettings jwk, .. }
  where
-  bootEnv      = localEnv (<> "Boot" <> "STM")
-  createLogger = makeDefaultLogger simpleTimeFormat
-                                     (LogStdout 1024)
-                                     _cLogLevel
-                                     _cAppName
+  bootEnv = localEnv (<> "Boot" <> "STM")
+  createLogger =
+    makeDefaultLogger simpleTimeFormat (LogStdout 1024) _cLogLevel _cAppName
 
 -- | Given we're operating in an Stm based environment, how do we carry out user operations?
 instance S.DBStorage StmAppM Ptypes.User where
