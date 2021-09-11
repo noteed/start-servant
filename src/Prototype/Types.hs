@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -20,6 +21,10 @@ module Prototype.Types
   , Profile(..)
   , Credentials(..)
   , User(..)
+  , uUsername
+  , uEmail
+  , uUserTagRels
+  , uUserGroups
   , Session(..)
 
   -- * User operations
@@ -30,6 +35,7 @@ module Prototype.Types
   , UserErr(..)
   ) where
 
+import           Control.Lens
 import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
                                                 )
@@ -143,6 +149,12 @@ data User = User
   }
   deriving (Eq, Show, Generic)
   deriving anyclass (ToJSON, FromJSON, ToJWT, FromJWT)
+
+makeLensesFor [("username", "uUsername")
+              , ("email", "uEmail")
+              , ("userGroups", "uUserGroups")
+              , ("userTagRels", "uUserTagRels")
+              ] ''User
 
 instance S.DBIdentity User where
   type DBId User = Namespace
