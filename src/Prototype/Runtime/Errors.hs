@@ -30,8 +30,13 @@ instance IsRuntimeErr AuthErr where
 module Prototype.Runtime.Errors
   ( RuntimeErr(..)
   , IsRuntimeErr(..)
+  , asServantError
   ) where
 
+import qualified Data.Text.Encoding as TE 
+import qualified Data.ByteString.Lazy as BSL 
+import Network.HTTP.Types
+import Servant.Server (ServerError(..))
 import qualified Data.Text as T
 import qualified Network.HTTP.Types            as HTTP
 
@@ -67,6 +72,10 @@ class IsRuntimeErr e where
                            , "userMessage =", fromMaybe "" (userMessage e)
                            ]
 
+  -- | Header information to supply for returning errors over HTTP.
+  httpHeaders :: e -> [Header]
+  httpHeaders _ = mempty 
+
 instance IsRuntimeErr RuntimeErr where
 
   knownErr = identity
@@ -84,6 +93,14 @@ instance IsRuntimeErr RuntimeErr where
   displayErr = \case
     KnownErr e -> displayErr e
     RuntimeException e -> T.unwords [ "RuntimeException" , show e, T.pack $ displayException e ]
-    
 
-    
+-- | Map out a known error to a `ServerError` (from Servant)
+asServantError :: IsRuntimeErr e => e -> ServerError
+asServantError e =
+  ServerError { errReasonPhrase = T.unpack . TE.decodeUtf8 $ statusMessage 
+              , errHeaders = httpHeaders e 
+              , .. 
+              }
+  where
+    Status errHTTPCode statusMessage = httpStatus e 
+    errBody = maybe "No known reason." (BSL.fromStrict . TE.encodeUtf8) $ userMessage e 

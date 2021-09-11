@@ -65,6 +65,7 @@ common common-dependencies
 
     -- Characters
     , text
+    , bytestring 
 
     -- TextShow instance for AppName (required for logging)
     , text-show
