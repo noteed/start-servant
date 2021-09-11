@@ -35,12 +35,13 @@ module Prototype.Runtime.Errors
 import qualified Data.Text as T
 import qualified Network.HTTP.Types            as HTTP
 
+-- brittany-disable-next-binding 
 -- | A generalised error
 data RuntimeErr where
   -- | Capture known error types.
-  KnownErr ::IsRuntimeErr e => e -> RuntimeErr
+  KnownErr :: IsRuntimeErr e => e -> RuntimeErr
   -- | Capture all exceptions
-  RuntimeException ::Exception e => e -> RuntimeErr
+  RuntimeException :: Exception e => e -> RuntimeErr
 
 -- | TODO: add common properties of errors.
 class IsRuntimeErr e where
