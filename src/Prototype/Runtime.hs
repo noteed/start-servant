@@ -47,7 +47,7 @@ import qualified Data.Text                     as T
 import qualified GHC.Show
 import           Prelude                 hiding ( Handle )
 import           Prototype.Runtime.Errors
-import           Prototype.Runtime.StmDatabase as Db
+import qualified Prototype.Runtime.StmDatabase as Db
 import qualified Prototype.Runtime.Storage     as S
 import           Prototype.Types               as Ptypes
 import qualified Servant.Auth.Server           as Srv
@@ -129,7 +129,7 @@ data AppMode = Stm | Postgres
 -- | A Type level function that gives us the kind of storage
 -- based on the mode of the application.
 type family ModeStorage (mode :: AppMode) :: Type where
-  ModeStorage 'Stm = Handle
+  ModeStorage 'Stm = Db.Handle
   -- Later: added as an example
   -- ModeStorage 'Postres = ConnectionPool
 
@@ -192,7 +192,7 @@ instance S.DBStorage StmAppM Ptypes.User where
     AddToGroups uid gids -> undefined
 
   dbSelect sel = withStorage $ case sel of
-    AuthUser creds -> liftIO . fmap toList . atomically . (`login` creds)
+    AuthUser creds -> liftIO . fmap toList . atomically . (`Db.login` creds)
 
 -- | Get the storage handle, and give it to the function that does something with it.
 withStorage :: forall a mode . (ModeStorage mode -> AppM mode a) -> AppM mode a
