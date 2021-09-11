@@ -5,8 +5,12 @@ module Prototype.Server.New
   ( New
   , newT
   , new
+  -- * Running the server. 
+  , mkApplication
   ) where
 
+import           Control.Lens            hiding ( Context )
+import qualified Prototype.Runtime             as Rt
 import qualified Prototype.Server.New.StartPage
                                                as SP
 import           Servant.API
@@ -20,6 +24,7 @@ type New = SP.Unprotected :<|> SP.Protected
 newT :: SP.LoginC mode m => ServerT New m
 newT = SP.unprotectedT :<|> SP.protectedT
 
+-- | Reduce a @ServerT New m@ to a @Server New Handler@ (via a natural transformation)
 new
   :: forall mode m
    . SP.LoginC mode m
@@ -30,3 +35,15 @@ new natTrans = hoistServerWithContext
   (Proxy @'[CookieSettings , JWTSettings])
   natTrans
   newT
+
+-- | Wire everything up and make a Wai `Application` out of it.
+mkApplication
+  :: forall mode m
+   . SP.LoginC mode m
+  => Rt.Runtime mode
+  -> (forall a . m a -> Handler a) -- ^ A natural transformation that maps the `m` into the handler. 
+  -> Application
+mkApplication Rt.Runtime {..} natTrans = serveWithContext (Proxy @New)
+                                                          ctx
+                                                          (new natTrans)
+  where ctx = (_rConf ^. Rt.cCookieSettings) :. _rJwtSettings :. EmptyContext
