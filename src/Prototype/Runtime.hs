@@ -33,6 +33,8 @@ module Prototype.Runtime
   , AppM(..)
   , PostgresAppM
   , StmAppM
+  -- ** Running
+  , appMHandlerNatTrans
   -- * Booting in specific modes.
   -- TODO: add postgres mode in the future.
   , bootStm
@@ -50,6 +52,7 @@ import qualified Prototype.Runtime.StmDatabase as Db
 import qualified Prototype.Runtime.Storage     as S
 import           Prototype.Types               as Ptypes
 import qualified Servant.Auth.Server           as Srv
+import           Servant.Server                 ( Handler(..) )
 
 -- | An application name: lets us group logging etc. with @/@ as separators.
 newtype AppName = AppName { _unAppName :: [Text] }
@@ -195,3 +198,16 @@ instance S.DBStorage StmAppM Ptypes.User where
 -- | Get the storage handle, and give it to the function that does something with it.
 withStorage :: forall a mode . (ModeStorage mode -> AppM mode a) -> AppM mode a
 withStorage f = asks _rStorage >>= f
+
+-- | Natural transformation from some `AppM` in any given mode, to a servant Handler. 
+appMHandlerNatTrans :: forall mode a . Runtime mode -> AppM mode a -> Handler a
+appMHandlerNatTrans rt appM =
+  let
+    -- We peel off the AppM + ReaderT layers, exposing our ExceptT RuntimeErr IO a
+    -- This is very similar to Servant's Handler: https://hackage.haskell.org/package/servant-server-0.17/docs/Servant-Server-Internal-Handler.html#t:Handler
+      unwrapReaderT          = (`runReaderT` rt) . runAppM $ appM
+      -- Map our errors to `ServantError` 
+      runtimeErrToServantErr = withExceptT asServantError
+  in 
+    -- re-wrap as servant `Handler`
+      Handler $ runtimeErrToServantErr unwrapReaderT
