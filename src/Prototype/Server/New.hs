@@ -1,11 +1,13 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 module Prototype.Server.New
-  () where
+  ( New
+  ) where
 
-import           Prototype.Server.New.StartPage ( Protected )
+import qualified Prototype.Server.New.StartPage
+                                               as SP
 import           Prototype.Types                ( User(..) )
 import           Servant.API
 import           Servant.Server
 
--- type New' = SP.Unprotected :<|> SP.Protected
+type New = SP.Unprotected :<|> SP.Protected
