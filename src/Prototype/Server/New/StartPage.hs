@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -14,12 +15,14 @@ For servers, we keep the implementations general: we never mention /what/ an @m@
 -}
 module Prototype.Server.New.StartPage
   ( -- * Unauthd. part
-    unprotected
+    unprotectedT
   -- Another re-export exception; we want the parent modules to use the `Protected` being
   -- exported from this module. This will ensure if we swap this type, parent modules have these changes too.
   , L.Unprotected
+  -- ** $loginConstraints
+  , LoginC
   -- * Authd. part. 
-  , protected
+  , protectedT
   , Protected
   ) where
 
@@ -36,17 +39,18 @@ import qualified Servant.HTML.Blaze            as B
 import           Servant.Server
 import           Servant.Server.StaticFiles     ( serveDirectoryFileServer )
 
--- | Unprotected server: provide routes that need no user authentication.
-unprotected
-  :: forall mode m
-   . ( MonadReader (Rt.Runtime mode) m
-     , MonadLog Rt.AppName m
-     , MonadError Rt.RuntimeErr m
-     , S.DBStorage m User
-     , MonadIO m
-     )
-  => ServerT L.Unprotected m
-unprotected = userLogin :<|> serveDirectoryFileServer "static/"
+-- $loginConstraints Constraints needed for logging users in
+type LoginC mode m
+  = ( MonadReader (Rt.Runtime mode) m
+    , MonadLog Rt.AppName m
+    , MonadError Rt.RuntimeErr m
+    , S.DBStorage m User
+    , MonadIO m
+    )
+
+-- | UnprotectedT server: provide routes that need no user authentication.
+unprotectedT :: forall mode m . LoginC mode m => ServerT L.Unprotected m
+unprotectedT = userLogin :<|> serveDirectoryFileServer "static/"
  where
   userLogin creds@Credentials {..} =
     S.dbSelect (AuthUser creds) >>= maybe unauthdErr authdCookie . headMay
@@ -73,15 +77,8 @@ type UserPages =
   "start" :> Get '[B.HTML] (Page 'Authd Profile)
 
 -- | Server for authenticated users. 
-protected
-  :: ( MonadReader (Rt.Runtime mode) m
-     , MonadLog Rt.AppName m
-     , MonadError Rt.RuntimeErr m
-     , S.DBStorage m User
-     , MonadIO m
-     )
-  => ServerT Protected m
-protected (SAuth.Authenticated authdUser@User {..}) = startPage
+protectedT :: Applicative m => ServerT Protected m
+protectedT (SAuth.Authenticated authdUser@User {..}) = startPage
  where
   startPage = pure . AuthdPage authdUser $ Profile
     { namespace   = authdUser ^. uUsername
@@ -91,4 +88,4 @@ protected (SAuth.Authenticated authdUser@User {..}) = startPage
     , profTagRels = authdUser ^. uUserTagRels
     }
 
-protected authFailed = undefined
+protectedT authFailed = undefined
