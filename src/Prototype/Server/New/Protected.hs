@@ -18,12 +18,12 @@ module Prototype.Server.New.StartPage
   , protected
   ) where
 
-import Prototype.Server.New.Page 
-import Control.Lens 
+import           Control.Lens
 import qualified Prototype.Runtime             as Rt
 import qualified Prototype.Runtime.Errors      as Rt
 import qualified Prototype.Runtime.Storage     as S
 import qualified Prototype.Server.Legacy       as L
+import           Prototype.Server.New.Page
 import           Prototype.Types
 import           Servant.API
 import qualified Servant.Auth.Server           as SAuth
@@ -59,8 +59,10 @@ unprotected = userLogin :<|> serveDirectoryFileServer "static/"
 
     unauthdErr = Rt.throwError' . AuthFailed . show $ username
 
+-- brittany-disable-next-binding
 type Protected = SAuth.Auth '[SAuth.Cookie] User :> UserPages
 
+-- brittany-disable-next-binding
 type UserPages =
   -- User's welcome screen. 
   "start" :> Get '[B.HTML] (Page 'Authd Profile)
@@ -75,12 +77,13 @@ protected
      )
   => ServerT Protected m
 protected (SAuth.Authenticated authdUser@User {..}) = startPage
-  where
-    startPage = pure . AuthdPage authdUser $ Profile { namespace = authdUser ^. uUsername 
-                                                     , email = email
-                                                     , name = "TODO" -- TODO 
-                                                     , profGroups = userGroups
-                                                     , profTagRels = authdUser ^. uUserTagRels 
-                                                     }
+ where
+  startPage = pure . AuthdPage authdUser $ Profile
+    { namespace   = authdUser ^. uUsername
+    , email       = email
+    , name        = "TODO" -- TODO 
+    , profGroups  = userGroups
+    , profTagRels = authdUser ^. uUserTagRels
+    }
 
-protected authFailed = undefined 
+protected authFailed = undefined
