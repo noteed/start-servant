@@ -20,6 +20,8 @@ common common-extensions
     UndecidableInstances
     LambdaCase
     TypeApplications
+    ScopedTypeVariables
+    GADTs
 
 -- Common language settings
 common lang-settings
@@ -95,6 +97,7 @@ library
       Prototype.Html
 
       Prototype.Server.New.StartPage
+      Prototype.Server.New.Page 
                   
       Prototype.Server.Legacy
       Prototype.Server.Legacy.Auth
