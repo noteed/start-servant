@@ -77,7 +77,8 @@ type UserPages =
   "start" :> Get '[B.HTML] (Page 'Authd Profile)
 
 -- | Server for authenticated users. 
-protectedT :: Applicative m => ServerT Protected m
+protectedT
+  :: (Applicative m, MonadError Rt.RuntimeErr m) => ServerT Protected m
 protectedT (SAuth.Authenticated authdUser@User {..}) = startPage
  where
   startPage = pure . AuthdPage authdUser $ Profile
@@ -87,5 +88,4 @@ protectedT (SAuth.Authenticated authdUser@User {..}) = startPage
     , profGroups  = userGroups
     , profTagRels = authdUser ^. uUserTagRels
     }
-
-protectedT authFailed = undefined
+protectedT authFailed = Rt.throwError' . AuthFailed $ show authFailed

@@ -40,6 +40,7 @@ import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
                                                 )
 import           GHC.Generics                   ( Generic )
+import           Network.HTTP.Types
 import           Prototype.ACL
 import           Prototype.Runtime.Errors       ( IsRuntimeErr(..) )
 import qualified Prototype.Runtime.Storage     as S
@@ -190,5 +191,17 @@ data UserErr = AuthFailed Text
              deriving Show
 
 instance IsRuntimeErr UserErr where
+  httpStatus = \case
+    AuthFailed{}       -> unauthorized401
+    PermissionDenied{} -> forbidden403
+
+  userMessage = Just . addMsg . \case
+    AuthFailed       msg -> msg
+    PermissionDenied msg -> msg
+    where addMsg = sentence . mappend "Unable to authenticate: "
+
+
+
+
 
 
