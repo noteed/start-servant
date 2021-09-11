@@ -81,7 +81,7 @@ stmLegacyLifecycle runtime@Rt.Runtime{..} = do
 -- restarts. Or for DB connection pools, where we'd like to shutdown all connections,
 -- gracefully committing pending transactions etc.
 logExit rt exitStatus = wrapUpRuntime rt >> case exitStatus of
-  Left err -> L.error ("Exiting on error: "  <> show err)  >> liftIO exitFailure
-  Right{} -> L.info "Exiting without any issues." >> liftIO exitSuccess
+  Left err -> error ("Exiting on error: "  <> show err)  >> liftIO exitFailure
+  Right{} -> info "Exiting without any issues" >> liftIO exitSuccess
   where
     wrapUpRuntime Rt.Runtime{..} = liftIO $ L.cleanUp _rLogger

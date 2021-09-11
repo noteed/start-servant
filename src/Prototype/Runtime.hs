@@ -38,8 +38,7 @@ module Prototype.Runtime
   , bootStm
   ) where
 
-import           Control.Lens
-import           Control.Monad.Log             as L
+import           Control.Lens            hiding ( Level )
 import qualified Crypto.JOSE.JWK               as JWK
 import qualified Data.String                   as Str
 import qualified Data.Text                     as T
@@ -84,7 +83,7 @@ instance Default ServerMode where
 
 data Conf = Conf
   { _cAppName        :: AppName -- ^ Application name
-  , _cLogLevel       :: L.Level -- ^ The logging level
+  , _cLogLevel       :: Level -- ^ The logging level
   , _cServerPort     :: Int -- ^ The port number to run the server on
   , _cCookieSettings :: Srv.CookieSettings -- ^ Cookie settings to use
   , _cMkJwtSettings  :: JWK.JWK -> Srv.JWTSettings -- ^ JWK settings to use.
@@ -107,7 +106,7 @@ instance Show Conf where
 instance Default Conf where
   def = Conf
     { _cAppName        = "start-servant"
-    , _cLogLevel       = L.levelInfo 
+    , _cLogLevel       = levelInfo 
     , _cServerPort     = 7249
     -- Disable XSRF Cookie (otherwise, this needs some logic instead of
     -- simple cURL calls):
@@ -137,7 +136,7 @@ type family ModeStorage (mode :: AppMode) :: Type where
 data Runtime (mode :: AppMode) = Runtime
   { _rConf    :: Conf -- ^ Original configuration with which the application was started
   , _rStorage :: ModeStorage mode -- ^ The actual storage
-  , _rLogger  :: L.Logger AppName -- ^ The Logger
+  , _rLogger  :: Logger AppName -- ^ The Logger
   }
 
 makeLenses ''Runtime
@@ -161,7 +160,7 @@ newtype AppM (mode :: AppMode) a
 type StmAppM = AppM 'Stm
 type PostgresAppM = AppM 'Postgres
 
-instance L.MonadLog AppName (AppM mode) where
+instance MonadLog AppName (AppM mode) where
   askLogger = asks _rLogger
   localLogger f = local $ over rLogger f
 
@@ -170,15 +169,15 @@ bootStm :: MonadIO m => Conf -> m (Either RuntimeErr StmRuntime)
 bootStm _rConf@Conf {..} = do
   -- Start off by creating a logger first; we may want to log steps in the boot process.
   _rLogger <- createLogger
-  L.runLogT' _rLogger . bootEnv $ do
+  runLogT' _rLogger . bootEnv $ do
     -- Instantiate storage
-    L.info "Instantiating storage"
+    infoE "Instantiating storage"
     _rStorage <- liftIO Db.newHandle
-    L.info "Booted!" $> Right Runtime { .. }
+    info "Booted!" $> Right Runtime { .. }
  where
-  bootEnv      = L.localEnv (<> "Boot" <> "STM")
-  createLogger = L.makeDefaultLogger L.simpleTimeFormat
-                                     (L.LogStdout 1024)
+  bootEnv      = localEnv (<> "Boot" <> "STM")
+  createLogger = makeDefaultLogger simpleTimeFormat
+                                     (LogStdout 1024)
                                      _cLogLevel
                                      _cAppName
 
