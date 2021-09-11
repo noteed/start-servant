@@ -107,7 +107,7 @@ instance Show Conf where
 instance Default Conf where
   def = Conf
     { _cAppName        = "start-servant"
-    , _cLogLevel       = L.levelDebug
+    , _cLogLevel       = L.levelInfo 
     , _cServerPort     = 7249
     -- Disable XSRF Cookie (otherwise, this needs some logic instead of
     -- simple cURL calls):
