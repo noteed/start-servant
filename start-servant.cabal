@@ -96,6 +96,8 @@ library
 
       Prototype.Html
 
+      -- New server modules. 
+      Prototype.Server.New
       Prototype.Server.New.StartPage
       Prototype.Server.New.Page 
                   

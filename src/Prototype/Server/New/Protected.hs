@@ -3,7 +3,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE GADTs #-}
 {- |
 Module: Prototype.Server.New
 Description: Server implementation for the new servers
@@ -14,8 +13,14 @@ For servers, we keep the implementations general: we never mention /what/ an @m@
 
 -}
 module Prototype.Server.New.StartPage
-  ( unprotected
+  ( -- * Unauthd. part
+    unprotected
+  -- Another re-export exception; we want the parent modules to use the `Protected` being
+  -- exported from this module. This will ensure if we swap this type, parent modules have these changes too.
+  , L.Unprotected
+  -- * Authd. part. 
   , protected
+  , Protected
   ) where
 
 import           Control.Lens
