@@ -24,6 +24,7 @@ while true; do
 		   --disable-optimisation \
 		   --builddir $BUILD_DIR -- \
 		   stm \
+		   -M New \
 	     &
 	     ADDITIONAL_WATCH="-r src"
 	     ;;
