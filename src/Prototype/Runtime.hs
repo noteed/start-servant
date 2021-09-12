@@ -116,8 +116,7 @@ instance Default Conf where
     -- https://github.com/haskell-servant/servant-auth/issues/55#issuecomment-747046527
     -- Using Secure with Same-Site=Strict would be good enough ?
     , _cCookieSettings = Srv.defaultCookieSettings
-                           { Srv.cookieIsSecure    = Srv.NotSecure
-            -- ^ Use temporarily NotSecure for easier local testing with cURL.
+                           { Srv.cookieIsSecure    = Srv.NotSecure -- Use temporarily NotSecure for easier local testing with cURL.
                            , Srv.cookieXsrfSetting = Nothing
                            , Srv.cookieSameSite    = Srv.SameSiteStrict
                            }

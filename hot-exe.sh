@@ -18,6 +18,8 @@ ADDITIONAL_WATCH=""
 while true; do
   # $@ &
     case $CMD in
+	haddock) cabal haddock &
+		 ;;
 	ghcid) ghcid -l -c "cabal new-repl $TARGET --builddir $BUILD_DIR" &
 	       ;;
 	run) cabal run $TARGET \
@@ -28,7 +30,7 @@ while true; do
 	     &
 	     ADDITIONAL_WATCH="-r src"
 	     ;;
-	*) echo "Unknown cmd ('$CMD'), must be either 'run' or 'ghcid'"
+	*) echo "Unknown cmd ('$CMD'), must be either 'run','ghcid' or 'haddock'"
 	   break;
 	   ;;
     esac

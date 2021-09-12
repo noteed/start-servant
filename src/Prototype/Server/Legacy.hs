@@ -79,8 +79,8 @@ protected database result =
         Just profile ->
           return $ document (Just profile) "start-servant" $ Pages.homePage (Just profile)
         _ -> throwAll err404
-             -- ^ If the user is authenticated, a profile must exists, so
-             --  TODO we must log this case properly.
+             -- If the user is authenticated, a profile must exists, so
+             -- TODO we must log this case properly.
     _ ->
       return $ document Nothing "start-servant" $ Pages.homePage Nothing
   )
@@ -92,8 +92,8 @@ protected database result =
         Just profile ->
           return $ document' "start-servant" $ loginPage (Just profile)
         _ -> throwAll err404
-             -- ^ If the user is authenticated, a profile must exists, so
-             --  TODO we must log this case properly.
+             -- If the user is authenticated, a profile must exists, so
+             -- TODO we must log this case properly.
     _ ->
       return $ document' "start-servant" $ loginPage Nothing
   )
@@ -106,8 +106,8 @@ protected database result =
           Just profile ->
             return $ document mprofile "start-servant" $ profilePage profile
           _ -> throwAll err404
-               -- ^ If the user is authenticated, a profile must exists, so
-               --  TODO we must log this case properly.
+               -- If the user is authenticated, a profile must exists, so
+               -- TODO we must log this case properly.
       )
       :<|> return (username (user :: User))
       :<|> return (email (user :: User))
@@ -118,8 +118,8 @@ protected database result =
         case mprofile of
           Just profile -> return profile
           _ -> throwAll err404
-               -- ^ If the user is authenticated, a profile must exists, so
-               --  TODO we must log this case properly.
+               -- If the user is authenticated, a profile must exists, so
+               -- TODO we must log this case properly.
       )
       :<|> getSessions database
       :<|> getProfiles database
@@ -187,4 +187,4 @@ unprotected :: Database.Handle -> CookieSettings -> JWTSettings -> Server Unprot
 unprotected database cs jwts =
        login database cs jwts
   :<|> serveDirectoryFileServer "static/"
-       -- ^ This presents an index of available files within the directory.
+       -- This presents an index of available files within the directory.

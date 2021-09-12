@@ -23,7 +23,7 @@ import           Servant.API                    ( FromHttpApiData
                                                 , ToHttpApiData
                                                 )
 
- -- | ID of a group.
+-- | ID of a group.
 newtype GroupId = GroupId { _unGroupId :: NE.NonEmptyText }
                 deriving ( Eq
                          , Show
