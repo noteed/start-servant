@@ -18,11 +18,11 @@ import           Servant.Auth.Server
 import           Servant.Server
 
 -- | The new API: it contains all routes, protected as well as unprotected. 
-type New = SP.Unprotected :<|> SP.Protected
+type New = SP.Public :<|> SP.Protected
 
 -- | Our new server; comprised of protected and unprotected routes. 
 newT :: SP.LoginC mode m => ServerT New m
-newT = SP.unprotectedT :<|> SP.protectedT
+newT = SP.publicT :<|> SP.protectedT
 
 -- | Reduce a @ServerT New m@ to a @Server New Handler@ (via a natural transformation)
 new

@@ -15,10 +15,8 @@ For servers, we keep the implementations general: we never mention /what/ an @m@
 -}
 module Prototype.Server.New.StartPage
   ( -- * Unauthd. part
-    unprotectedT
-  -- Another re-export exception; we want the parent modules to use the `Protected` being
-  -- exported from this module. This will ensure if we swap this type, parent modules have these changes too.
-  , L.Unprotected
+    publicT
+  , Public
   -- ** $loginConstraints
   , LoginC
   -- * Authd. part. 
@@ -30,7 +28,6 @@ import           Control.Lens
 import qualified Prototype.Runtime             as Rt
 import qualified Prototype.Runtime.Errors      as Rt
 import qualified Prototype.Runtime.Storage     as S
-import qualified Prototype.Server.Legacy       as L
 import           Prototype.Server.New.Page
 import           Prototype.Types
 import           Servant.API
@@ -38,6 +35,25 @@ import qualified Servant.Auth.Server           as SAuth
 import qualified Servant.HTML.Blaze            as B
 import           Servant.Server
 import           Servant.Server.StaticFiles     ( serveDirectoryFileServer )
+
+-- brittany-disable-next-binding 
+-- | The public set of pages;
+-- TODO: forgot password pages etc. 
+type Public =
+  -- Ask the user to login 
+  "login" :> ( Get '[B.HTML] (Page 'Public LoginPage)
+           :<|> "authenticate" -- actually authenticate the user. 
+               :> ReqBody '[FormUrlEncoded] Credentials
+               :> Verb 'POST 303 '[JSON] ( Headers '[ Header "Location" Text
+                                                    , Header "Set-Cookie" SAuth.SetCookie
+                                                    , Header "Set-Cookie" SAuth.SetCookie]
+                                           NoContent
+                                         )
+             )
+  :<|>
+    -- Signup page. 
+    "signup" :> Get '[B.HTML] (Page 'Public SignupPage)
+  :<|> "static" :> Raw
 
 -- $loginConstraints Constraints needed for logging users in
 type LoginC mode m
@@ -49,9 +65,14 @@ type LoginC mode m
     )
 
 -- | UnprotectedT server: provide routes that need no user authentication.
-unprotectedT :: forall mode m . LoginC mode m => ServerT L.Unprotected m
-unprotectedT = userLogin :<|> serveDirectoryFileServer "static/"
+publicT :: forall mode m . LoginC mode m => ServerT Public m
+publicT =
+  (showLoginPage :<|> userLogin)
+    :<|> showSignupPage
+    :<|> serveDirectoryFileServer "static/"
  where
+  showLoginPage  = pure $ PublicPage LoginPage
+  showSignupPage = pure $ PublicPage SignupPage
   userLogin creds@Credentials {..} =
     S.dbSelect (AuthUser creds) >>= maybe unauthdErr authdCookie . headMay
    where
