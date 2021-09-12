@@ -17,7 +17,7 @@ parseConf = do
   _cLogLevel <- logLevel
   _cServerPort <- serverPort
   _cServerMode <- serverMode
-
+  _cStaticFilesDir <- staticFilesDir 
 
   pure Rt.Conf { _cCookieSettings = Rt._cCookieSettings def
                , _cMkJwtSettings = Rt._cMkJwtSettings def
@@ -55,6 +55,13 @@ parseConf = do
       <> A.metavar "SERVER_MODE"
       <> A.value (Rt._cServerMode def)
       <> A.showDefault
+
+    staticFilesDir = A.strOption
+      $ A.long "static-files-dir"
+      <> A.short 'F'
+      <> A.help "Directory to serve static files from."
+      <> A.value (Rt._cStaticFilesDir def)
+      <> A.showDefault 
 
 
 -- | A sum type indicating which mode the user has indicated to run the application in.

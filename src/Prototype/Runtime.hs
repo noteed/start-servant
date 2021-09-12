@@ -16,6 +16,7 @@ module Prototype.Runtime
   , cCookieSettings
   , cMkJwtSettings
   , cServerMode
+  , cStaticFilesDir
   , AppMode(..)
   , ServerMode(..)
   , AppName(..)
@@ -91,6 +92,7 @@ data Conf = Conf
   , _cCookieSettings :: Srv.CookieSettings -- ^ Cookie settings to use
   , _cMkJwtSettings  :: JWK.JWK -> Srv.JWTSettings -- ^ JWK settings to use.
   , _cServerMode     :: ServerMode  -- ^ Server mode to start in
+  , _cStaticFilesDir :: FilePath
   }
 
 makeLenses ''Conf
@@ -122,6 +124,7 @@ instance Default Conf where
                            }
     , _cMkJwtSettings  = Srv.defaultJWTSettings
     , _cServerMode     = def
+    , _cStaticFilesDir = "/static"
     }
 
 data AppMode = Stm | Postgres

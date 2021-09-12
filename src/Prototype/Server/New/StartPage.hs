@@ -68,7 +68,7 @@ publicT :: forall mode m . LoginC mode m => ServerT Public m
 publicT =
   (showLoginPage :<|> userLogin)
     :<|> showSignupPage
-    :<|> serveDirectoryFileServer "static/"
+    :<|> (serveDirectoryFileServer "static/")
  where
   showLoginPage  = pure $ PublicPage LoginPage
   showSignupPage = pure $ PublicPage SignupPage
@@ -110,3 +110,4 @@ protectedT (SAuth.Authenticated authdUser@User {..}) = startPage
     , profTagRels = authdUser ^. uUserTagRels
     }
 protectedT authFailed = Rt.throwError' . AuthFailed $ show authFailed
+
