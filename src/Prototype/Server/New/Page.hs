@@ -34,16 +34,28 @@ data Page (authStat :: AuthStat) page where
   PublicPage ::B.ToMarkup page => page -> Page 'Public page
 
 instance B.ToMarkup (Page 'Authd page) where
-  toMarkup (AuthdPage user page) = pageHeading $ do
+  toMarkup (AuthdPage user page) = pageHeading . H.body $ do
     -- TODO: Render the user's information as a navbar; in the future we'd like to add groups etc. the user belongs to here.
     -- render some sort of a divider between the navbar and the rest of the page contents. 
     navbar
 
     B.toMarkup page
-    where navbar = B.toMarkup @Text $ "Hi! " <> (user ^. uEmail)
+   where
+    navbar =
+      let
+        greeting     = B.toMarkup @Text $ "Hi! " <> (user ^. uEmail)
+        groupsLink   = H.a "Your groups" ! A.href "/private/user/groups"
+        todosLink    = H.a "Your todos" ! A.href "/private/user/todos"
+        settingsLink = H.a "Your settings" ! A.href "/private/user/settings"
+        logoutLink   = H.a "Logout" ! A.href "/private/user/logout"
+        allLinks =
+          spaceElem
+            <$> [greeting, groupsLink, todosLink, settingsLink, logoutLink]
+      in
+        sequence_ allLinks >> H.hr >> H.br
 
 instance B.ToMarkup (Page 'Public page) where
-  toMarkup (PublicPage page) = pageHeading $ do
+  toMarkup (PublicPage page) = pageHeading . H.body $ do
     -- TODO: proper navbar for unauthenticated pages.
     navbar
     B.toMarkup page

@@ -29,6 +29,8 @@ import qualified Prototype.Runtime             as Rt
 import qualified Prototype.Runtime.Errors      as Rt
 import qualified Prototype.Runtime.Storage     as S
 import           Prototype.Server.New.Page
+import qualified Prototype.Server.New.Page.UserPages
+                                               as UP
 import           Prototype.Types
 import           Servant.API
 import qualified Servant.Auth.Server           as SAuth
@@ -96,19 +98,27 @@ type Protected = SAuth.Auth '[SAuth.Cookie] User :> UserPages
 -- brittany-disable-next-binding
 type UserPages =
   -- User's welcome screen. 
-  "private" :> "welcome" :> Get '[B.HTML] (Page 'Authd Profile)
+  "private" :> ( "welcome" :> Get '[B.HTML] (Page 'Authd Profile)
+               :<|> "user" :> ( "groups" :> Get '[B.HTML] (Page 'Authd UP.UserGroups) )
+               )
+
 
 -- | Server for authenticated users. 
 protectedT
   :: (Applicative m, MonadError Rt.RuntimeErr m) => ServerT Protected m
-protectedT (SAuth.Authenticated authdUser@User {..}) = startPage
+protectedT (SAuth.Authenticated authdUser@User {..}) =
+  startPage :<|> showUserGroups
  where
-  startPage = pure . AuthdPage authdUser $ Profile
+  showUserGroups = pure . AuthdPage authdUser $ UP.UserGroups userGroups
+  startPage      = pure . AuthdPage authdUser $ Profile
     { namespace   = authdUser ^. uUsername
     , email       = email
     , name        = "TODO" -- TODO 
     , profGroups  = userGroups
     , profTagRels = authdUser ^. uUserTagRels
     }
-protectedT authFailed = Rt.throwError' . AuthFailed $ show authFailed
+protectedT authFailed = dispErr :<|> dispErr
+ where
+  dispErr :: forall m a . MonadError Rt.RuntimeErr m => m a
+  dispErr = Rt.throwError' . AuthFailed $ show authFailed
 

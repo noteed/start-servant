@@ -102,6 +102,7 @@ library
       Prototype.Server.New.StartPage
       Prototype.Server.New.Page 
       Prototype.Server.New.Page.Shared 
+      Prototype.Server.New.Page.UserPages 
                   
       Prototype.Server.Legacy
       Prototype.Server.Legacy.Auth

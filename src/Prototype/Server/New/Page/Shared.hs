@@ -2,6 +2,7 @@
 module Prototype.Server.New.Page.Shared
   ( inputField
   , pageHeading
+  , spaceElem
   ) where
 
 import qualified Text.Blaze.Html5              as H
@@ -22,3 +23,5 @@ inputField name type' req =
 -- | Add a common page heading: sets up the CSS imports, necessary encoding values etc. 
 pageHeading = H.docTypeHtml
 
+-- | Space out an elem with a trailing pipe. 
+spaceElem l = l >> H.text " | "
