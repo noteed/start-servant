@@ -16,9 +16,12 @@ module Prototype.Server.New.Page
   ) where
 
 import           Control.Lens
+import           Prototype.Server.New.Page.Shared
 import           Prototype.Types
 import qualified Text.Blaze                    as B
-import qualified Text.Blaze.Html5              as B
+import qualified Text.Blaze.Html5              as H
+import           Text.Blaze.Html5               ( (!) )
+import qualified Text.Blaze.Html5.Attributes   as A
 
 -- | Status of the authentication 
 data AuthStat = Authd | Public
@@ -44,20 +47,32 @@ instance B.ToMarkup (Page 'Public page) where
     -- TODO: proper navbar for unauthenticated pages.
     navbar
     B.toMarkup page
-   where
-    navbar = do
-      B.a $ B.span "Signup"
+    where navbar = signupLink
 
 -- $commonPages Commonly used pages.
 
 data LoginPage = LoginPage
 
 instance B.ToMarkup LoginPage where
-  toMarkup _ = "Login page here"
+  toMarkup _ =
+    let
+      form = do
+        H.h1 "Please login"
+        H.div (inputField "username" "text" True ! A.autofocus "on")
+          ! A.class_ "form-group"
+        H.br
+        H.div (inputField "password" "password" True) ! A.class_ "form-group"
+        H.br
+        H.button "Submit" ! A.formaction "/login/authenticate" ! A.class_
+          "btn btn-primary"
+    in  H.div (form ! A.formmethod "POST") ! A.class_ "col-md-6"
 
 data SignupPage = SignupPage
 
 instance B.ToMarkup SignupPage where
-  toMarkup _ = "TODO: Signup page here"
+  toMarkup _ = do
+    "TODO"
+    loginLink
 
-pageHeading = B.docTypeHtml
+loginLink = H.a (H.span "Login") ! A.href "/public/login"
+signupLink = H.a (H.span "Signup") ! A.href "/public/signup"
