@@ -49,17 +49,16 @@ instance B.ToMarkup (Page 'Authd page) where
         settingsLink = H.a "Your settings" ! A.href "/private/user/settings"
         logoutLink   = H.a "Logout" ! A.href "/private/user/logout"
         allLinks =
-          spaceElem
-            <$> [greeting, groupsLink, todosLink, settingsLink, logoutLink]
+          spaceElems [greeting, groupsLink, todosLink, settingsLink, logoutLink]
       in
-        sequence_ allLinks >> H.hr >> H.br
+        allLinks >> H.hr >> H.br
 
 instance B.ToMarkup (Page 'Public page) where
   toMarkup (PublicPage page) = pageHeading . H.body $ do
     -- TODO: proper navbar for unauthenticated pages.
     navbar
     B.toMarkup page
-    where navbar = signupLink
+    where navbar = spaceElems [signupLink] >> H.hr >> H.br
 
 -- $commonPages Commonly used pages.
 
