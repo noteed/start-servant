@@ -51,10 +51,10 @@ instance B.ToMarkup (Page 'Public page) where
 
 -- $commonPages Commonly used pages.
 
-data LoginPage = LoginPage
+data LoginPage = LoginPage H.AttributeValue
 
 instance B.ToMarkup LoginPage where
-  toMarkup _ =
+  toMarkup (LoginPage authPath) =
     let
       form = H.form $ do
         H.h1 "Please login"
@@ -64,7 +64,7 @@ instance B.ToMarkup LoginPage where
         H.div (inputField "password" "password" True) ! A.class_ "form-group"
         H.br
         H.button "Submit"
-          ! A.formaction "/public/login/authenticate"
+          ! A.formaction authPath
           ! A.formmethod "POST"
           ! A.class_ "btn btn-primary"
     in  H.div form ! A.class_ "col-md-6"

@@ -70,7 +70,7 @@ publicT =
     :<|> showSignupPage
     :<|> (serveDirectoryFileServer "static/")
  where
-  showLoginPage  = pure $ PublicPage LoginPage
+  showLoginPage  = pure . PublicPage $ LoginPage "/public/login/authenticate"
   showSignupPage = pure $ PublicPage SignupPage
   userLogin creds@Credentials {..} =
     S.dbSelect (AuthUser creds) >>= maybe unauthdErr authdCookie . headMay
