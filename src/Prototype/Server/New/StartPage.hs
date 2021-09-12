@@ -39,21 +39,20 @@ import           Servant.Server.StaticFiles     ( serveDirectoryFileServer )
 -- brittany-disable-next-binding 
 -- | The public set of pages;
 -- TODO: forgot password pages etc. 
-type Public =
-  -- Ask the user to login 
-  "login" :> ( Get '[B.HTML] (Page 'Public LoginPage)
-           :<|> "authenticate" -- actually authenticate the user. 
-               :> ReqBody '[FormUrlEncoded] Credentials
-               :> Verb 'POST 303 '[JSON] ( Headers '[ Header "Location" Text
-                                                    , Header "Set-Cookie" SAuth.SetCookie
-                                                    , Header "Set-Cookie" SAuth.SetCookie]
-                                           NoContent
-                                         )
-             )
-  :<|>
-    -- Signup page. 
-    "signup" :> Get '[B.HTML] (Page 'Public SignupPage)
-  :<|> "static" :> Raw
+type Public = "public" :>
+  ( -- Ask the user to login 
+    "login" :> ( Get '[B.HTML] (Page 'Public LoginPage)
+                 :<|> "authenticate" -- actually authenticate the user. 
+                      :> ReqBody '[FormUrlEncoded] Credentials
+                      :> Verb 'POST 303 '[JSON] ( Headers '[ Header "Location" Text
+                                                           , Header "Set-Cookie" SAuth.SetCookie
+                                                           , Header "Set-Cookie" SAuth.SetCookie]
+                                                  NoContent
+                                                )
+               )
+    :<|> "signup" :> Get '[B.HTML] (Page 'Public SignupPage)
+    :<|> "static" :> Raw
+  )
 
 -- $loginConstraints Constraints needed for logging users in
 type LoginC mode m
@@ -85,7 +84,8 @@ publicT =
       case mApplyCookies of
         Nothing -> unauthdErr
         Just applyCookies ->
-          pure . addHeader @"Location" "/start" $ applyCookies NoContent
+          pure . addHeader @"Location" "/private/welcome" $ applyCookies
+            NoContent
 
     unauthdErr = Rt.throwError' . AuthFailed . show $ username
 
@@ -95,7 +95,7 @@ type Protected = SAuth.Auth '[SAuth.Cookie] User :> UserPages
 -- brittany-disable-next-binding
 type UserPages =
   -- User's welcome screen. 
-  "start" :> Get '[B.HTML] (Page 'Authd Profile)
+  "private" :> "welcome" :> Get '[B.HTML] (Page 'Authd Profile)
 
 -- | Server for authenticated users. 
 protectedT

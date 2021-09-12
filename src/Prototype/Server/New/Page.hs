@@ -18,6 +18,7 @@ module Prototype.Server.New.Page
 import           Control.Lens
 import           Prototype.Types
 import qualified Text.Blaze                    as B
+import qualified Text.Blaze.Html5              as B
 
 -- | Status of the authentication 
 data AuthStat = Authd | Public
@@ -30,7 +31,7 @@ data Page (authStat :: AuthStat) page where
   PublicPage ::B.ToMarkup page => page -> Page 'Public page
 
 instance B.ToMarkup (Page 'Authd page) where
-  toMarkup (AuthdPage user page) = do
+  toMarkup (AuthdPage user page) = pageHeading $ do
     -- TODO: Render the user's information as a navbar; in the future we'd like to add groups etc. the user belongs to here.
     -- render some sort of a divider between the navbar and the rest of the page contents. 
     navbar
@@ -39,14 +40,13 @@ instance B.ToMarkup (Page 'Authd page) where
     where navbar = B.toMarkup @Text $ "Hi! " <> (user ^. uEmail)
 
 instance B.ToMarkup (Page 'Public page) where
-  toMarkup (PublicPage page) = do
+  toMarkup (PublicPage page) = pageHeading $ do
     -- TODO: proper navbar for unauthenticated pages.
     navbar
     B.toMarkup page
    where
     navbar = do
-      "Login"
-      "Signup"
+      B.a $ B.span "Signup"
 
 -- $commonPages Commonly used pages.
 
@@ -59,3 +59,5 @@ data SignupPage = SignupPage
 
 instance B.ToMarkup SignupPage where
   toMarkup _ = "TODO: Signup page here"
+
+pageHeading = B.docTypeHtml
