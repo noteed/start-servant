@@ -82,8 +82,9 @@ publicT =
       mApplyCookies <- liftIO
         $ SAuth.acceptLogin _cCookieSettings jwtSettings user
       case mApplyCookies of
-        Nothing -> unauthdErr
-        Just applyCookies ->
+        Nothing           -> unauthdErr
+        Just applyCookies -> do
+          info "User logged in"
           pure . addHeader @"Location" "/private/welcome" $ applyCookies
             NoContent
 
