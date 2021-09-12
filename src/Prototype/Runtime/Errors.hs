@@ -33,12 +33,27 @@ module Prototype.Runtime.Errors
   , asServantError
   ) where
 
+import           Control.Lens                  as L
 import qualified Data.ByteString.Lazy          as BSL
+import qualified Data.String     -- Required from the handrolled IsString instance. 
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as TE
 import           Network.HTTP.Types
 import qualified Network.HTTP.Types            as HTTP
 import           Servant.Server                 ( ServerError(..) )
+
+newtype ErrCode = ErrCode [Text]
+                deriving (Eq, Show, Monoid, Semigroup) via [Text]
+
+instance TextShow ErrCode where
+  showb = showb . showErrCode
+
+-- | Reverse of the IsString instance (below)
+showErrCode (ErrCode envs) = T.toUpper . T.intercalate "." $ envs
+
+-- | Take any string; split at @/@; and use it as the ErrCode.
+instance IsString ErrCode where
+  fromString = ErrCode . T.splitOn "." . T.toUpper . T.pack
 
 -- brittany-disable-next-binding 
 -- | A generalised error
@@ -50,6 +65,8 @@ data RuntimeErr where
 
 -- | TODO: add common properties of errors.
 class IsRuntimeErr e where
+
+  errCode :: e -> ErrCode
 
   -- | Construct a `RuntimeErr` from an instance value
   knownErr :: e -> RuntimeErr
@@ -74,9 +91,13 @@ class IsRuntimeErr e where
 
   -- | Header information to supply for returning errors over HTTP.
   httpHeaders :: e -> [Header]
-  httpHeaders _ = mempty
+  httpHeaders e = [("x-err-code", errCode e ^. coerced . L.to showErrCode . L.to TE.encodeUtf8)]
 
 instance IsRuntimeErr RuntimeErr where
+
+  errCode = \case
+    KnownErr e         -> errCode e
+    RuntimeException{} -> "ERR.RUNTIME.EXCEPTION"
 
   knownErr   = identity
 

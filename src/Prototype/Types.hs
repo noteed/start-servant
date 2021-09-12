@@ -191,6 +191,10 @@ data UserErr = AuthFailed Text
              deriving Show
 
 instance IsRuntimeErr UserErr where
+  errCode = errCode' . \case
+    AuthFailed{}       -> "AUTH_FAILED"
+    PermissionDenied{} -> "PERMISSION_DENIED"
+    where errCode' = mappend "ERR.USER"
   httpStatus = \case
     AuthFailed{}       -> unauthorized401
     PermissionDenied{} -> forbidden403
