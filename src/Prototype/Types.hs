@@ -61,6 +61,7 @@ newtype Counter = Counter Int
 newtype TodoListId = TodoListId { _unTodoListId :: NonEmptyText }
                    deriving ( Eq
                             , Show
+                            , Ord
                             , IsString
                             , ToMarkup
                             , ToHttpApiData
@@ -76,21 +77,33 @@ data TodoList = TodoList
   , tlItems :: [TodoItem]
   , tlTags  :: Set Tag
   }
-  deriving (Show, Generic)
+  deriving (Show, Eq, Ord, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 instance Resource TodoList where
   resourceTags = tlTags
 
+instance S.DBIdentity TodoList where
+  type DBId TodoList = TodoListId
+  dbId = tlId
+
+instance S.DBStorageOps TodoList where
+  -- TODO 
+  data DBUpdate TodoList
+  data DBSelect TodoList =
+    -- | Get the list by a user.
+    TodoListsByNamespace Namespace
+    | AllTodoLists
+
 data TodoItem = TodoItem
   { tiDescription :: Text
   , tiState       :: TodoState
   }
-  deriving (Show, Read, Generic)
+  deriving (Show, Eq, Ord, Read, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data TodoState = Todo | InProgress | Done
-  deriving (Show, Read, Generic)
+  deriving (Show, Eq, Ord, Read, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 --------------------------------------------------------------------------------
@@ -127,6 +140,23 @@ data Profile = Profile
 instance ToJSON Profile
 instance FromJSON Profile
 
+instance S.DBIdentity Profile where
+  type DBId Profile = Namespace
+  dbId = namespace
+
+instance S.DBStorageOps Profile where
+  data DBSelect Profile =
+    LookupProfile Namespace
+  -- TODO 
+  data DBUpdate Profile
+
+-- TODO: A user is a grantee, and a user may belong to groups.
+instance Grantee Profile where
+  granteeTags = profTagRels
+
+instance GroupedGrantee Profile where
+  granteeGroups = profGroups
+
 htmlProfile Profile {..} = H.div $ do
   H.div $ do
     "Display name: "
@@ -161,7 +191,7 @@ data User = User
   deriving (Eq, Show, Generic)
   deriving anyclass (ToJSON, FromJSON, ToJWT, FromJWT)
 
-makeLensesFor [("username", "uUsername")
+makeLensesFor [ ("username", "uUsername")
               , ("email", "uEmail")
               , ("userGroups", "uUserGroups")
               , ("userTagRels", "uUserTagRels")
@@ -198,20 +228,24 @@ data Credentials = Credentials
 
 data UserErr = AuthFailed Text
              | PermissionDenied Text
+             | NoSuchUser Namespace
              deriving Show
 
 instance IsRuntimeErr UserErr where
   errCode = errCode' . \case
     AuthFailed{}       -> "AUTH_FAILED"
     PermissionDenied{} -> "PERMISSION_DENIED"
+    NoSuchUser{}       -> "USER_NOT_FOUND"
     where errCode' = mappend "ERR.USER"
   httpStatus = \case
     AuthFailed{}       -> unauthorized401
     PermissionDenied{} -> forbidden403
+    NoSuchUser{}       -> notFound404
 
   userMessage = Just . addMsg . \case
     AuthFailed       msg -> msg
     PermissionDenied msg -> msg
+    NoSuchUser       ns  -> "User not found by id: " <> show ns
     where addMsg = sentence . mappend "Unable to authenticate: "
 
 

@@ -41,13 +41,17 @@ module Prototype.Runtime
   , bootStm
   ) where
 
+import qualified Control.Concurrent.STM        as STM
 import           Control.Lens            hiding ( Level )
 import qualified Crypto.JOSE.JWK               as JWK
+import qualified Data.Map                      as Map
+import qualified Data.Set                      as Set
 import qualified Data.String                   as Str
 import qualified Data.Text                     as T
 -- Needed for handwritten Show instance for Conf
 import qualified GHC.Show
 import           Prelude                 hiding ( Handle )
+import qualified Prototype.ACL                 as ACL
 import           Prototype.Runtime.Errors
 import qualified Prototype.Runtime.StmDatabase as Db
 import qualified Prototype.Runtime.Storage     as S
@@ -185,18 +189,6 @@ bootStm jwk _rConf@Conf {..} = do
   createLogger =
     makeDefaultLogger simpleTimeFormat (LogStdout 1024) _cLogLevel _cAppName
 
--- | Given we're operating in an Stm based environment, how do we carry out user operations?
-instance S.DBStorage StmAppM Ptypes.User where
-
-  -- All of these are stubs that should be implemented.
-  dbUpdate up = withStorage $ case up of
-    CreateNewUser  u     -> undefined
-    DeactivateUser uid   -> undefined
-    AddToGroups uid gids -> undefined
-
-  dbSelect sel = withStorage $ case sel of
-    AuthUser creds -> liftIO . fmap toList . atomically . (`Db.login` creds)
-
 -- | Get the storage handle, and give it to the function that does something with it.
 withStorage :: forall a mode . (ModeStorage mode -> AppM mode a) -> AppM mode a
 withStorage f = asks _rStorage >>= f
@@ -213,3 +205,53 @@ appMHandlerNatTrans rt appM =
   in 
     -- re-wrap as servant `Handler`
       Handler $ runtimeErrToServantErr unwrapReaderT
+
+-- * DBStorage instances. 
+
+-- | Given we're operating in an Stm based environment, how do we carry out user operations?
+instance S.DBStorage StmAppM Ptypes.User where
+
+  -- All of these are stubs that should be implemented.
+  dbUpdate up = withStorage $ case up of
+    CreateNewUser  u     -> undefined
+    DeactivateUser uid   -> undefined
+    AddToGroups uid gids -> undefined
+
+  dbSelect sel = withStorage $ case sel of
+    AuthUser creds -> liftIO . fmap toList . atomically . (`Db.login` creds)
+
+-- | Storage operations for todolists 
+instance S.DBStorage StmAppM Ptypes.TodoList where
+
+  dbUpdate = undefined
+
+  dbSelect = \case
+    AllTodoLists ->
+      withStorage
+        $ liftIO
+        . fmap (fmap snd)
+        . STM.atomically
+        . Db.getAllTodoLists
+    TodoListsByNamespace userNamespace ->
+      -- first look up the profile, so we can read the tags from the profile. 
+      S.dbSelect (LookupProfile userNamespace)
+        >>= maybe notFound usingProfileTags
+        .   headMay
+     where
+      usingProfileTags prof = do
+        allTls <- S.dbSelect Ptypes.AllTodoLists
+        -- Todolists grouped by the user's tag-rels.
+        let ACL.GroupedResources groupedTls = ACL.groupResources prof allTls
+            userTls = toList $ Map.foldl' Set.union mempty groupedTls
+        pure userTls
+      notFound = throwError' $ Ptypes.NoSuchUser userNamespace
+
+-- | Storage operations for profiles.
+instance S.DBStorage StmAppM Ptypes.Profile where
+  dbSelect = \case
+    LookupProfile pNamespace ->
+      withStorage $ readProfiles >=> pure . lookupNamespace
+     where
+      readProfiles Db.Handle {..} = fmap snd <$> liftIO (STM.readTVarIO hUsers)
+      lookupNamespace profs =
+        [ p | p <- profs, Ptypes.namespace p == pNamespace ]
