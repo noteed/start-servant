@@ -86,7 +86,6 @@ bumpCounter h = do
   Counter i <- readTVar (hCounter h)
   writeTVar (hCounter h) (Counter $ i + 1)
 
-
 --------------------------------------------------------------------------------
 getProfiles :: Handle -> STM [Profile]
 getProfiles h = do
@@ -142,8 +141,9 @@ getTodoLists h namespace = do
   case mids of
     Nothing  -> return []
     Just ids -> do
-      mls <- mapM (\i -> STM.Map.lookup i (hTodoLists h)) ids
+      mls <- mapM (`STM.Map.lookup` lists) ids
       return (catMaybes mls)
+  where lists = hTodoLists h
 
 getTodoList :: Handle -> Namespace -> Text -> STM (Maybe TodoList)
 getTodoList h namespace listname = do
