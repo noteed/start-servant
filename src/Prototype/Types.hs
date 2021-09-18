@@ -64,6 +64,8 @@ newtype TodoListId = TodoListId { _unTodoListId :: NonEmptyText }
                             , Ord
                             , IsString
                             , ToMarkup
+                            , Semigroup
+                            , H.ToValue
                             , ToHttpApiData
                             , FromHttpApiData
                             , Hashable
@@ -111,15 +113,15 @@ data Operation = BumpCounter
 
 newtype Namespace = Namespace { _unNamespace :: NonEmptyText }
                   deriving ( Eq
+                           , Ord
                            , Show
                            , IsString
                            , ToJSON
+                           , Hashable
                            , FromJSON
                            , ToMarkup
                            , H.ToValue
                            , Semigroup
-                           , Hashable
-                           , Ord
                            , FromHttpApiData
                            , ToHttpApiData
                            ) via NonEmptyText

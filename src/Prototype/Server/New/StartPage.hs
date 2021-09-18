@@ -22,6 +22,8 @@ module Prototype.Server.New.StartPage
   -- * Authd. part. 
   , protectedT
   , Protected
+  -- * Protected constraints
+  , ProtectedC
   ) where
 
 import           Control.Lens
@@ -99,26 +101,33 @@ type Protected = SAuth.Auth '[SAuth.Cookie] User :> UserPages
 type UserPages =
   -- User's welcome screen. 
   "private" :> ( "welcome" :> Get '[B.HTML] (Page 'Authd Profile)
-               :<|> "user" :> ( "groups" :> Get '[B.HTML] (Page 'Authd UP.UserGroups) )
+               :<|> "user" :> ( "groups" :> Get '[B.HTML] (Page 'Authd UP.UserGroups)
+                           :<|> "todos" :> Get '[B.HTML] (Page 'Authd UP.UserTodos)
+                              )
                )
 
+type ProtectedC m
+  = (Applicative m, MonadError Rt.RuntimeErr m, S.DBStorage m TodoList)
 
 -- | Server for authenticated users. 
-protectedT
-  :: (Applicative m, MonadError Rt.RuntimeErr m) => ServerT Protected m
+protectedT :: forall m . ProtectedC m => ServerT Protected m
 protectedT (SAuth.Authenticated authdUser@User {..}) =
-  startPage :<|> showUserGroups
+  startPage :<|> (showUserGroups :<|> userTodos)
  where
   showUserGroups = pure . AuthdPage authdUser $ UP.UserGroups userGroups
-  startPage      = pure . AuthdPage authdUser $ Profile
+  userTodos      = do
+    lists <- S.dbSelect $ TodoListsByNamespace (authdUser ^. uUsername)
+    let summaries = UP.TodoListSummary <$> lists
+    pure . AuthdPage authdUser . UP.UserTodos $ summaries
+  startPage = pure . AuthdPage authdUser $ Profile
     { namespace   = authdUser ^. uUsername
     , email       = email
     , name        = "TODO" -- TODO 
     , profGroups  = userGroups
     , profTagRels = authdUser ^. uUserTagRels
     }
-protectedT authFailed = dispErr :<|> dispErr
+protectedT authFailed = dispErr :<|> dispErr :<|> dispErr
  where
-  dispErr :: forall m a . MonadError Rt.RuntimeErr m => m a
+  dispErr :: forall m' a . MonadError Rt.RuntimeErr m' => m' a
   dispErr = Rt.throwError' . AuthFailed $ show authFailed
 

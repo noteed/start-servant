@@ -26,6 +26,7 @@ import qualified Prototype.Types.NonEmptyText  as NE
 import           Servant.API                    ( FromHttpApiData
                                                 , ToHttpApiData
                                                 )
+import qualified Text.Blaze.Html5              as H
 
 -- | ID of a group.
 newtype GroupId = GroupId { _unGroupId :: NE.NonEmptyText }
@@ -36,6 +37,7 @@ newtype GroupId = GroupId { _unGroupId :: NE.NonEmptyText }
                          , FromJSON
                          , ToHttpApiData
                          , FromHttpApiData
+                         , H.ToMarkup
                          ) via NE.NonEmptyText
 
 makeLenses ''GroupId

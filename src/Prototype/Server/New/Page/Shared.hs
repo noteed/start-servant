@@ -1,9 +1,12 @@
+{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Prototype.Server.New.Page.Shared
   ( inputField
   , pageHeading
   , spaceElem
   , spaceElems
+  -- * Lists 
+  , titledList
   ) where
 
 import qualified Text.Blaze.Html5              as H
@@ -33,3 +36,15 @@ spaceElems elems = case toList elems of
   []         -> mempty
   [h       ] -> h
   (h : rest) -> spaceElem h >> spaceElems rest
+
+titledList
+  :: forall item f
+   . (H.ToMarkup item, Foldable f)
+  => H.Html
+  -> f item
+  -> H.Html
+titledList title (toList -> items) = title >> H.br >> H.ul
+  (sequence_ (dispItem <$> items))
+  where dispItem = H.li . H.toMarkup
+
+
