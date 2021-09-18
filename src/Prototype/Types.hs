@@ -12,7 +12,7 @@
 
 module Prototype.Types
   ( Counter(..)
-  , TodoListId
+  , TodoListId(..)
   , TodoList(..)
   , TodoItem(..)
   , TodoState(..)
@@ -59,7 +59,15 @@ import           Web.FormUrlEncoded             ( FromForm )
 --------------------------------------------------------------------------------
 newtype Counter = Counter Int
 
-type TodoListId = Text
+newtype TodoListId = TodoListId { _unTodoListId :: NonEmptyText }
+                   deriving ( Eq
+                            , Show
+                            , IsString
+                            , ToMarkup
+                            , ToHttpApiData
+                            , FromHttpApiData
+                            , Hashable
+                            ) via NonEmptyText
 
 data TodoList = TodoList
   { tlName  :: Text

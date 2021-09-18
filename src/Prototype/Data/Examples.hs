@@ -44,7 +44,7 @@ tagAccounting = Tag "accounting"
 
 -- ** TodoLists
 
-todoLists :: [(Text, TodoList)]
+todoLists :: [(TodoListId, TodoList)]
 todoLists =
   [ ( "TL-1"
     , TodoList "start-servant"
