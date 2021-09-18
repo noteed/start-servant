@@ -21,6 +21,8 @@ module Prototype.Runtime.Storage
   , DBStorageOps(..)
   ) where
 
+import           Prototype.Runtime.Errors      as Errs
+
 -- | A class with the properties indicating that something has some notion of a unique ID in a storage layer.
 -- Eg. for a user, this can be the username/namespace, etc.
 class DBIdentity a where
@@ -37,7 +39,10 @@ class DBIdentity a => DBStorageOps a where
   data DBUpdate a :: Type
 
 -- | Same as `DBStorageOps`; but here we define /how/ we run the operations defined.
-class (DBIdentity a, DBStorageOps a) => DBStorage m a where
+class ( DBIdentity a
+      , DBStorageOps a
+      , MonadError Errs.RuntimeErr m
+      ) => DBStorage m a where
   -- | Execute an update, reporting the list of IDs that were affected due to it.
   dbUpdate :: DBUpdate a -> m [DBId a]
 
