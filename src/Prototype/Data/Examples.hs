@@ -46,12 +46,15 @@ tagAccounting = Tag "accounting"
 
 todoLists :: [(TodoListId, TodoList)]
 todoLists =
-  [ ( "TL-1"
-    , TodoList "start-servant"
+  [ ( id1
+    , TodoList id1
+               "start-servant"
                [TodoItem "Create a test suite" Todo]
                [tagEng, tagAccounting]
     )
   ]
+  where id1 = "TL-1"
+
 
 namespaceTodoLists :: [(Namespace, [TodoListId])]
 namespaceTodoLists = [(nsAlice, ["TL-1"])]

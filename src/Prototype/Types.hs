@@ -39,7 +39,6 @@ import           Control.Lens
 import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
                                                 )
-import           GHC.Generics                   ( Generic )
 import           Network.HTTP.Types
 import           Prototype.ACL
 import           Prototype.Runtime.Errors       ( IsRuntimeErr(..) )
@@ -67,10 +66,13 @@ newtype TodoListId = TodoListId { _unTodoListId :: NonEmptyText }
                             , ToHttpApiData
                             , FromHttpApiData
                             , Hashable
+                            , ToJSON
+                            , FromJSON
                             ) via NonEmptyText
 
 data TodoList = TodoList
-  { tlName  :: Text
+  { tlId    :: TodoListId
+  , tlName  :: Text
   , tlItems :: [TodoItem]
   , tlTags  :: Set Tag
   }
