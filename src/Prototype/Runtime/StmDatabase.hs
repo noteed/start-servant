@@ -124,13 +124,14 @@ getProfileAndList h namespace listname = do
         Nothing    -> return Nothing
     Nothing -> return Nothing
 
-
 --------------------------------------------------------------------------------
+-- | Create an STM map of TODOlists.
 newTodoLists :: STM (STM.Map TodoListId TodoList)
 newTodoLists = do
   m <- STM.Map.new
-  mapM_ (\(k, v) -> STM.Map.insert v k m) Examples.todoLists
+  mapM_ (`insertList` m) Examples.allTodoLists
   return m
+  where insertList tl@TodoList {..} = STM.Map.insert tl tlId
 
 getAllTodoLists :: Handle -> STM [(TodoListId, TodoList)]
 getAllTodoLists = toList . STM.Map.listT . hTodoLists
@@ -153,7 +154,7 @@ getTodoList h namespace listname = do
 
 newNamespaceTodoLists = do
   m <- STM.Map.new
-  mapM_ (\(k, v) -> STM.Map.insert v k m) Examples.namespaceTodoLists
+  mapM_ (\(k, v) -> STM.Map.insert v k m) Examples.todoListPermissions
   return m
 
 

@@ -3,8 +3,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Prototype.Data.Examples
   ( users
-  , todoLists
-  , namespaceTodoLists
+  , allTodoLists
+  , todoListPermissions
   ) where
 
 import           Prototype.ACL
@@ -44,17 +44,19 @@ tagAccounting = Tag "accounting"
 
 -- ** TodoLists
 
-todoLists :: [(TodoListId, TodoList)]
-todoLists =
-  [ ( id1
-    , TodoList id1
-               "start-servant"
-               [TodoItem "Create a test suite" Todo]
-               [tagEng, tagAccounting]
-    )
+-- | TodoList's Alice has permissions on 
+aliceTodoLists :: [TodoList]
+aliceTodoLists =
+  [ TodoList "TL-1"
+             "start-servant"
+             [TodoItem "Create a test suite" Todo]
+             [tagEng, tagAccounting]
   ]
-  where id1 = "TL-1"
 
+-- | All todolists 
+allTodoLists :: [TodoList]
+allTodoLists = aliceTodoLists
 
-namespaceTodoLists :: [(Namespace, [TodoListId])]
-namespaceTodoLists = [(nsAlice, ["TL-1"])]
+-- | User resources: todolists that the users have permissions on. 
+todoListPermissions :: [(Namespace, [TodoListId])]
+todoListPermissions = [(nsAlice, tlId <$> aliceTodoLists)]
