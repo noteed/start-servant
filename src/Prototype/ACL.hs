@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 {- |
 Module: Prototype.ACL
 Description: ACL permissions mock module.
@@ -24,8 +25,13 @@ module Prototype.ACL
   -- * Re-exports
   -- We should avoid re-exports, but here it makes sense for convenience.
   , module ACLTypes
+
+  -- * Grouping
+  , groupResources
   ) where
 
+import qualified Data.Map                      as Map
+import qualified Data.Set                      as Set
 import           Prototype.ACL.Types           as ACLTypes
 
 {- | A tagged resource.
@@ -68,3 +74,20 @@ class GroupedGrantee g => GroupedGranteeOps m g where
   -- | Remove grantee from some groups
   granteeRemoveFromGroups :: g -> Set GroupId -> m g
 
+-- | Group resources as per the grantee tag relationships. 
+groupResources
+  :: forall grantee res f
+   . (Grantee grantee, Resource res, Ord res, Foldable f)
+  => grantee
+  -> f res
+  -> GroupedResources res
+groupResources grantee (toList -> resources) = GroupedResources
+  $ Map.map collectByTagRels granteeTags'
+ where
+  collectByTagRels userTags = Set.fromList
+    [ r
+    | (r, resTags) <- resourcesAndTags
+    , not $ userTags `Set.disjoint` resTags
+    ]
+  granteeTags'     = granteeTags grantee
+  resourcesAndTags = [ (r, tags) | r <- resources, let tags = resourceTags r ]

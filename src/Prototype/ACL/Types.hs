@@ -14,6 +14,10 @@ module Prototype.ACL.Types
   , Tag(..)
   , unTag
   , TagRels
+
+  -- * Resources
+  , GroupedResources(..)
+  , unGroupedResources
   ) where
 
 import           Control.Lens
@@ -63,3 +67,14 @@ makeLenses ''Tag
   @
 -}
 type TagRels = Map TagGrant (Set Tag)
+
+{- | Given the tags of the resource and the user's relationships to the tags, we may want to group resources
+based on the user's tag-specific permissions.
+
+Eg. if the tag of a resource is X, and the user has TagRead permissions on tag X; the user also has
+read permissions over this resource.
+-}
+newtype GroupedResources resource = GroupedResources { _unGroupedResources :: Map TagGrant (Set resource) }
+                                  deriving (Eq, Show)
+
+makeLenses ''GroupedResources
