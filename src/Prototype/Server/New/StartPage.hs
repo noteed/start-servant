@@ -30,6 +30,7 @@ import           Control.Lens
 import qualified Prototype.Runtime             as Rt
 import qualified Prototype.Runtime.Errors      as Rt
 import qualified Prototype.Runtime.Storage     as S
+import qualified Prototype.Server.New.Auth     as Auth
 import           Prototype.Server.New.Page
 import qualified Prototype.Server.New.Page.UserPages
                                                as UP
@@ -48,9 +49,7 @@ type Public = "public" :>
     "login" :> ( Get '[B.HTML] (Page 'Public LoginPage)
                  :<|> "authenticate" -- actually authenticate the user. 
                       :> ReqBody '[FormUrlEncoded] Credentials
-                      :> Verb 'POST 303 '[JSON] ( Headers '[ Header "Location" Text
-                                                           , Header "Set-Cookie" SAuth.SetCookie
-                                                           , Header "Set-Cookie" SAuth.SetCookie]
+                      :> Verb 'POST 303 '[JSON] ( Headers Auth.PostAuthHeaders
                                                   NoContent
                                                 )
                )
@@ -95,7 +94,7 @@ publicT =
     unauthdErr = Rt.throwError' . AuthFailed . show $ username
 
 -- brittany-disable-next-binding
-type Protected = SAuth.Auth '[SAuth.Cookie] User :> UserPages
+type Protected = Auth.UserAuthentication :> UserPages
 
 -- brittany-disable-next-binding
 type UserPages =
