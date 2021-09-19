@@ -119,7 +119,7 @@ authorize
      )
   => grantee
   -> res
-  -> m (ResourceAuth res tg)
+  -> m (ResourceAuth tg res)
 authorize grantee = authorizeV grantee (tagGrantValue @tg)
 
 {- | Same as `authorize` but using a `TagGrant` at the value level.
@@ -130,7 +130,7 @@ authorizeV
   => grantee
   -> TagGrant
   -> res
-  -> m (ResourceAuth res tg)
+  -> m (ResourceAuth tg res)
 authorizeV grantee tagGrant resource =
   let
     -- first get all the TagRels that have tags that match with at least one tag of the resource.
@@ -153,9 +153,9 @@ authorizeV grantee tagGrant resource =
 authorizeEither
   :: forall m res tgPref tgFallback
    . (MonadError Errs.RuntimeErr m, MonadLog AppName m)
-  => m (ResourceAuth res tgPref) -- ^ Preferred authorization
-  -> m (ResourceAuth res tgFallback) -- ^ Fallback authorization
-  -> m (Either (ResourceAuth res tgPref) (ResourceAuth res tgFallback))
+  => m (ResourceAuth tgPref res) -- ^ Preferred authorization
+  -> m (ResourceAuth tgFallback res) -- ^ Fallback authorization
+  -> m (Either (ResourceAuth tgPref res) (ResourceAuth tgFallback res))
 authorizeEither preferred fallback =
   (Left <$> preferred) `catchError` logErrorFallback
  where

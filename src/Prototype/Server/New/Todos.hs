@@ -21,7 +21,7 @@ import           Servant.API
 import qualified Servant.HTML.Blaze            as B
 import           Servant.Server
 
-type TodoListModes = PageEither (ACL.ResourceAuth TodoList 'ACL.TagWrite) (ACL.ResourceAuth TodoList 'ACL.TagRead) 
+type TodoListModes = PageEither (ACL.ResourceAuth 'ACL.TagWrite UP.TodoListRW) (ACL.ResourceAuth 'ACL.TagRead UP.TodoListRO) 
 
 type Todos =
        Get '[B.HTML] (Page 'Authd UP.UserTodos)
@@ -47,7 +47,7 @@ todosT authdUser =
       Just tl ->
         let asRO = ACL.authorize @'ACL.TagRead authdUser tl 
             asRW = ACL.authorize @'ACL.TagWrite authdUser tl 
-        in AuthdPage authdUser . pageEither <$> ( asRW `ACL.authorizeEither` asRO  )
+        in AuthdPage authdUser . pageEither . bimap (fmap UP.RWView) (fmap UP.ROView) <$> ( asRW `ACL.authorizeEither` asRO  )
       Nothing -> noList id
 
   noList = Rt.throwError' . NoSuchTodoList

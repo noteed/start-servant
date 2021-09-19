@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -48,6 +49,7 @@ import           Servant.API                    ( FromHttpApiData
                                                 , ToHttpApiData
                                                 )
 import qualified Text.Blaze.Html5              as H
+import qualified Text.Blaze.Html5.Attributes   as A
 
 -- | ID of a group.
 newtype GroupId = GroupId { _unGroupId :: NE.NonEmptyText }
@@ -142,17 +144,24 @@ newtype GroupedResources resource = GroupedResources { _unGroupedResources :: Ma
 makeLenses ''GroupedResources
 
 -- | A datatype representing successful authentication.
-newtype ResourceAuth res (tg :: TagGrant) = ResourceAuth { _raResource :: res }
-                                              deriving (Eq, Show)
+newtype ResourceAuth (tg :: TagGrant) res = ResourceAuth { _raResource :: res }
+                                              deriving (Eq, Show, Functor)
 
 makeLenses ''ResourceAuth
 
-instance (H.ToMarkup res, TagGrantValue tg) => H.ToMarkup (ResourceAuth res tg) where
+instance (H.ToMarkup res, TagGrantValue tg) => H.ToMarkup (ResourceAuth tg res) where
   toMarkup (ResourceAuth res) = do
-    "You're viewing this page with permissions: "
-    H.toMarkup $ tagGrantValue @tg
+    showPermissions
     H.br
     H.toMarkup res
+   where
+    showPermissions =
+      let content = do
+            "You're viewing this page with permissions: "
+            H.toMarkup $ tagGrantValue @tg
+      in  H.div content
+            H.! A.style
+                  "font-weight: lighter; display:block; background-color: aliceblue; "
 
 data ACLErr = AccessDenied TagGrant (Set TagGrant)
   deriving (Eq, Show)

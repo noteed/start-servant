@@ -5,6 +5,12 @@ module Prototype.Server.New.Page.UserPages
   -- * Todos 
   , TodoListSummary(..)
   , UserTodos(..)
+  -- * Views specific to permissions
+  , RWView(..)
+  , ROView(..)
+  -- ** Specific to Todos
+  , TodoListRW
+  , TodoListRO
   ) where
 
 import qualified Data.Text                     as T
@@ -36,3 +42,46 @@ newtype UserTodos = UserTodos [TodoListSummary]
 instance H.ToMarkup UserTodos where
   toMarkup (UserTodos summaries) =
     Shared.titledList "Your todo-lists" summaries
+
+newtype RWView resource = RWView resource
+
+type TodoListRW = RWView Types.TodoList
+
+instance H.ToMarkup TodoListRW where
+  toMarkup (RWView tl) = todoListInvariantMarkup tl
+    $ Shared.titledList "Items" (RWView <$> Types.tlItems tl)
+
+instance H.ToMarkup (RWView Types.TodoItem) where
+  toMarkup (RWView Types.TodoItem {..}) = do
+    H.toMarkup tiDescription
+    H.br
+    button H.! A.style "font-weight: lighter; display: block;"
+   where
+    button = H.span $ " Mark this item: " >> case tiState of
+      Types.Todo       -> "Todo -> Done"
+      Types.InProgress -> "InProgress -> Done"
+      Types.Done       -> "Done -> Todo | Done -> InProgress"
+
+newtype ROView resource = ROView resource
+
+
+type TodoListRO = ROView Types.TodoList
+
+instance H.ToMarkup TodoListRO where
+  toMarkup (ROView tl) = todoListInvariantMarkup tl $ H.br >> Shared.titledList
+    "Items"
+    (ROView <$> Types.tlItems tl)
+
+instance H.ToMarkup (ROView Types.TodoItem) where
+  toMarkup (ROView Types.TodoItem {..}) =
+    H.toMarkup tiDescription >> " (Item in Read-only mode)"
+
+-- | The part of the TodoList markup that doesn't change; along with some additional markup.
+todoListInvariantMarkup :: Types.TodoList -> H.Markup -> H.Markup
+todoListInvariantMarkup Types.TodoList {..} trailing = H.div $ do
+  H.h2 $ H.toMarkup @Text tlName
+  H.br
+  H.toMarkup numItems
+  trailing
+  where numItems = T.unwords [show $ length tlItems, "items"]
+
