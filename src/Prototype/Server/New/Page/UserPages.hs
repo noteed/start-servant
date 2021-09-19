@@ -57,10 +57,11 @@ instance H.ToMarkup (RWView Types.TodoItem) where
     H.br
     button H.! A.style "font-weight: lighter; display: block;"
    where
-    button = H.span $ " Mark this item: " >> case tiState of
+    button = H.span $ case tiState of
       Types.Todo       -> H.button "Todo -> Done"
       Types.InProgress -> H.button "InProgress -> Done"
-      Types.Done       -> Shared.spaceElems
+      Types.Done       -> Shared.spaceElemsWith
+        H.br
         [H.button "Done -> Todo", H.button "Done -> InProgress"]
 
 newtype ROView resource = ROView resource

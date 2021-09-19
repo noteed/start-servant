@@ -4,7 +4,9 @@ module Prototype.Server.New.Page.Shared
   ( inputField
   , pageHeading
   , spaceElem
+  , spaceElemWith
   , spaceElems
+  , spaceElemsWith
   -- * Lists 
   , titledList
   ) where
@@ -28,14 +30,22 @@ inputField name type' req =
 pageHeading = H.docTypeHtml
 
 -- | Space out an elem with a trailing pipe. 
-spaceElem l = l >> H.text " | "
+spaceElem = (`spaceElemWith` (H.text " | "))
+
+-- | Space out an elem with a trailing pipe. 
+spaceElemWith separator l = l >> separator
 
 -- | Space out a list of elems with trailing pipes interspersed. 
 spaceElems :: Foldable f => f H.Html -> H.Html
-spaceElems elems = case toList elems of
+spaceElems = spaceElemsWith (H.text " | ")
+
+-- | Space out a list of elems with trailing pipes interspersed. 
+spaceElemsWith :: Foldable f => H.Html -> f H.Html -> H.Html
+spaceElemsWith separator elems = case toList elems of
   []         -> mempty
   [h       ] -> h
-  (h : rest) -> spaceElem h >> spaceElems rest
+  (h : rest) -> spaceElemWith separator h >> spaceElems rest
+
 
 titledList
   :: forall item f
