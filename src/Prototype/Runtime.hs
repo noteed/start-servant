@@ -59,22 +59,6 @@ import           Prototype.Types               as Ptypes
 import qualified Servant.Auth.Server           as Srv
 import           Servant.Server                 ( Handler(..) )
 
--- | An application name: lets us group logging etc. with @/@ as separators.
-newtype AppName = AppName { _unAppName :: [Text] }
-                deriving (Eq, Show, Semigroup, Monoid) via [Text]
-
-instance TextShow AppName where
-  showb = showb . showAppName
-
--- | Reverse of the IsString instance (below)
-showAppName (AppName envs) = T.intercalate "/" envs
-
-makeLenses ''AppName
-
--- | Take any string; split at @/@; and use it as the AppName.
-instance IsString AppName where
-  fromString = AppName . T.splitOn "/" . T.pack
-
 {- | Server modes
 
 == Legacy

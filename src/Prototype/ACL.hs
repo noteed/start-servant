@@ -36,6 +36,7 @@ module Prototype.ACL
   -- * Authorization
   , authorize
   , authorizeV
+  , authorizeEither
   ) where
 
 import qualified Data.Map                      as Map
@@ -147,3 +148,16 @@ authorizeV grantee tagGrant resource =
   granteeTagRels  = granteeTags grantee
   resourceTags'   = resourceTags resource
   accessDenied    = Errs.throwError' . AccessDenied tagGrant
+
+-- | Try multiple authorizations fallbacks.
+authorizeEither
+  :: forall m res tgPref tgFallback
+   . (MonadError Errs.RuntimeErr m, MonadLog AppName m)
+  => m (ResourceAuth res tgPref) -- ^ Preferred authorization
+  -> m (ResourceAuth res tgFallback) -- ^ Fallback authorization
+  -> m (Either (ResourceAuth res tgPref) (ResourceAuth res tgFallback))
+authorizeEither preferred fallback =
+  (Left <$> preferred) `catchError` logErrorFallback
+ where
+  logErrorFallback err = logErr >> (Right <$> fallback)
+    where logErr = error (Errs.displayErr err)

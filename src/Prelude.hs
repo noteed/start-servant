@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE OverloadedStrings #-}
 {- |
 Module: Prelude
@@ -48,10 +49,16 @@ module Prelude
   , warningE
   , errorE
   , criticalE
+  -- * Application name
+  , AppName(..)
+  , unAppName
+  , showAppName
   ) where
 
+import           Control.Lens
 import qualified Control.Monad.Log             as L
 import           Data.Default.Class            as Def
+import qualified Data.String     -- required for IsString instance.
 import qualified Data.Text                     as T
 import           Protolude                     as Proto
 
@@ -109,4 +116,20 @@ errorW = error . T.unwords . toList
 
 criticalW :: (L.MonadLog env m, Foldable f) => f Text -> m ()
 criticalW = critical . T.unwords . toList
+
+-- | An application name: lets us group logging etc. with @/@ as separators.
+newtype AppName = AppName { _unAppName :: [Text] }
+                deriving (Eq, Show, Semigroup, Monoid) via [Text]
+
+instance L.TextShow AppName where
+  showb = L.showb . showAppName
+
+-- | Reverse of the IsString instance (below)
+showAppName (AppName envs) = T.intercalate "/" envs
+
+makeLenses ''AppName
+
+-- | Take any string; split at @/@; and use it as the AppName.
+instance IsString AppName where
+  fromString = AppName . T.splitOn "/" . T.pack
 
