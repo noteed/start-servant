@@ -58,9 +58,10 @@ instance H.ToMarkup (RWView Types.TodoItem) where
     button H.! A.style "font-weight: lighter; display: block;"
    where
     button = H.span $ " Mark this item: " >> case tiState of
-      Types.Todo       -> "Todo -> Done"
-      Types.InProgress -> "InProgress -> Done"
-      Types.Done       -> "Done -> Todo | Done -> InProgress"
+      Types.Todo       -> H.button "Todo -> Done"
+      Types.InProgress -> H.button "InProgress -> Done"
+      Types.Done       -> Shared.spaceElems
+        [H.button "Done -> Todo", H.button "Done -> InProgress"]
 
 newtype ROView resource = ROView resource
 
@@ -69,12 +70,14 @@ type TodoListRO = ROView Types.TodoList
 
 instance H.ToMarkup TodoListRO where
   toMarkup (ROView tl) = todoListInvariantMarkup tl $ H.br >> Shared.titledList
-    "Items"
+    (H.h3 "Items")
     (ROView <$> Types.tlItems tl)
 
 instance H.ToMarkup (ROView Types.TodoItem) where
-  toMarkup (ROView Types.TodoItem {..}) =
-    H.toMarkup tiDescription >> " (Item in Read-only mode)"
+  toMarkup (ROView Types.TodoItem {..}) = H.toMarkup tiDescription >> roMsg
+   where
+    roMsg = (H.span " (Item in Read-only mode)") H.! A.style
+      "font-weight: lighter; display: block; background-color: bisque;"
 
 -- | The part of the TodoList markup that doesn't change; along with some additional markup.
 todoListInvariantMarkup :: Types.TodoList -> H.Markup -> H.Markup
