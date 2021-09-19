@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE
     TypeOperators
   , DataKinds
@@ -13,6 +14,7 @@ module Prototype.Server.New.Auth
   , PostAuthHeaders
   ) where
 
+import           Control.Lens
 import qualified Prototype.ACL                 as ACL
 import           Prototype.Types
 import           Servant.API
@@ -29,3 +31,11 @@ type PostAuthHeaders
      , Header "Set-Cookie" SAuth.SetCookie
      , Header "Set-Cookie" SAuth.SetCookie
      ]
+
+
+-- {- | The data that is the outcome of successful authorization over a particular resource.
+
+-- As a result, the resource itself should be returned; along with the grant the accessor holds over this resource.
+-- -}
+-- type instance AuthServerData (AuthProtect (ResourceAuth res tr))
+--   = ResourceAuth res tr

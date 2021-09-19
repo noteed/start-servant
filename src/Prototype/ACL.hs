@@ -1,3 +1,7 @@
+{-# LANGUAGE
+    KindSignatures
+  , DataKinds
+#-}
 {-# LANGUAGE ViewPatterns #-}
 {- |
 Module: Prototype.ACL
@@ -28,11 +32,16 @@ module Prototype.ACL
 
   -- * Grouping
   , groupResources
+
+  -- * Authorization
+  , authorize
+  , authorizeV
   ) where
 
 import qualified Data.Map                      as Map
 import qualified Data.Set                      as Set
 import           Prototype.ACL.Types           as ACLTypes
+import qualified Prototype.Runtime.Errors      as Errs
 
 {- | A tagged resource.
 
@@ -91,3 +100,50 @@ groupResources grantee (toList -> resources) = GroupedResources
     ]
   granteeTags'     = granteeTags grantee
   resourcesAndTags = [ (r, tags) | r <- resources, let tags = resourceTags r ]
+
+{- | Authorize a grantee over a particular reseource.
+
+Logically, this flow can be broken down in the following:
+
+1. Get all TagGrants the grantee has over this resource. 
+
+2. Check if the super tag grants of the desired grant match any of the found tag-grants. 
+-}
+authorize
+  :: forall (tg :: TagGrant) grantee res m
+   . ( Grantee grantee
+     , Resource res
+     , MonadError Errs.RuntimeErr m
+     , TagGrantValue tg
+     )
+  => grantee
+  -> res
+  -> m (ResourceAuth res tg)
+authorize grantee = authorizeV grantee (tagGrantValue @tg)
+
+{- | Same as `authorize` but using a `TagGrant` at the value level.
+-}
+authorizeV
+  :: forall grantee res tg m
+   . (Grantee grantee, Resource res, MonadError Errs.RuntimeErr m)
+  => grantee
+  -> TagGrant
+  -> res
+  -> m (ResourceAuth res tg)
+authorizeV grantee tagGrant resource =
+  let
+    -- first get all the TagRels that have tags that match with at least one tag of the resource.
+      overlappingTagRels = Map.filter hasResourceTags granteeTagRels
+      -- These are all the grants the user has over this resource.
+      matchingTagGrants  = Map.keysSet overlappingTagRels
+  in  if not $ superTagGrants' `Set.disjoint` matchingTagGrants
+        then pure $ ResourceAuth resource
+        else accessDenied matchingTagGrants
+ where
+  hasResourceTags userTags = not $ resourceTags' `Set.disjoint` userTags
+  -- All grants superior to the grant requested, if the user has any of these grants
+  -- on the resource, we're good to allow the authorization.
+  superTagGrants' = superTagGrants tagGrant
+  granteeTagRels  = granteeTags grantee
+  resourceTags'   = resourceTags resource
+  accessDenied    = Errs.throwError' . AccessDenied tagGrant
