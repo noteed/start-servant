@@ -75,6 +75,12 @@ data TagGrant =
   deriving (Eq, Show, Read, Generic, Ord, Enum, Bounded, Hashable)
   deriving anyclass (ToJSON, FromJSON, ToJSONKey, FromJSONKey)
 
+instance H.ToMarkup TagGrant where
+  toMarkup = \case
+    TagRead  -> "Read only"
+    TagWrite -> "Read/Write"
+    TagOwn   -> "Own/Read/Write"
+
 -- | Tags, using their Ord instance, can /bundle/ other tags that are logically "less-than" the given tag.
 -- For example; `TagOwn` bundles `TagWrite` and `TagRead`; and `TagWrite` bundles `TagRead`. 
 -- 
@@ -141,13 +147,20 @@ newtype ResourceAuth res (tg :: TagGrant) = ResourceAuth { _raResource :: res }
 
 makeLenses ''ResourceAuth
 
+instance (H.ToMarkup res, TagGrantValue tg) => H.ToMarkup (ResourceAuth res tg) where
+  toMarkup (ResourceAuth res) = do
+    "You're viewing this page with permissions: "
+    H.toMarkup $ tagGrantValue @tg
+    H.br
+    H.toMarkup res
+
 data ACLErr = AccessDenied TagGrant (Set TagGrant)
   deriving (Eq, Show)
 
 instance Errs.IsRuntimeErr ACLErr where
   errCode = errCode' . \case
     AccessDenied{} -> "ACCESS_DENIED"
-    where errCode' = mappend "ERR.ACL."
+    where errCode' = mappend "ERR.ACL"
 
   httpStatus = \case
     AccessDenied{} -> HTTP.forbidden403
@@ -159,3 +172,4 @@ instance Errs.IsRuntimeErr ACLErr where
       , "available grants:"
       , show found
       ]
+

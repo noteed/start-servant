@@ -16,6 +16,7 @@ module Prototype.Types
   , TodoList(..)
   , TodoItem(..)
   , TodoState(..)
+  , TodoListErr(..)
   , Operation(..)
   , Namespace(..)
   , Profile(..)
@@ -82,6 +83,12 @@ data TodoList = TodoList
   deriving (Show, Eq, Ord, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
+instance H.ToMarkup TodoList where
+  toMarkup TodoList {..} = do
+    H.toMarkup tlName
+    -- TODO properly format. 
+    H.toMarkup @Text $ show tlItems
+
 instance Resource TodoList where
   resourceTags = tlTags
 
@@ -107,6 +114,21 @@ data TodoItem = TodoItem
 data TodoState = Todo | InProgress | Done
   deriving (Show, Eq, Ord, Read, Generic)
   deriving anyclass (ToJSON, FromJSON)
+
+newtype TodoListErr = NoSuchTodoList TodoListId
+                    deriving Show
+
+instance IsRuntimeErr TodoListErr where
+  httpStatus = \case
+    NoSuchTodoList{} -> notFound404
+
+  userMessage = Just . \case
+    NoSuchTodoList id -> "No todo-list with id = " <> show id
+
+  errCode = errCode' . \case
+    NoSuchTodoList{} -> "TODO_LIST_NOT_FOUND"
+    where errCode' = mappend "ERR.TODO_LIST"
+
 
 --------------------------------------------------------------------------------
 data Operation = BumpCounter

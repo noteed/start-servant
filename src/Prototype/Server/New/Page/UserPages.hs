@@ -29,7 +29,7 @@ instance H.ToMarkup TodoListSummary where
     numItems = show $ length tlItems
     text =
       T.unwords ["Name:", tlName, "with", "(" <> numItems <> ")", "items."]
-    link' = H.toValue $ "/private/todos/" <> tlId
+    link' = H.toValue $ "/private/user/todos/" <> tlId
 
 newtype UserTodos = UserTodos [TodoListSummary]
 
