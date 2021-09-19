@@ -8,7 +8,9 @@ Module: Prototype.Server.New.Page
 Description: Pages with authentication information at the type-level
 -}
 module Prototype.Server.New.Page
-  ( Page(..)
+  ( PageEither(..)
+  , pageEither
+  , Page(..)
   , AuthStat(..)
   -- $commonPages
   , LoginPage(..)
@@ -22,6 +24,23 @@ import qualified Text.Blaze                    as B
 import qualified Text.Blaze.Html5              as H
 import           Text.Blaze.Html5               ( (!) )
 import qualified Text.Blaze.Html5.Attributes   as A
+
+-- | A page, with alternatives.
+data PageEither pageL pageR where
+  PageL ::H.ToMarkup pageL => pageL -> PageEither pageL pageR
+  PageR ::H.ToMarkup pageR => pageR -> PageEither pageL pageR
+
+pageEither
+  :: forall pageL pageR
+   . (H.ToMarkup pageL, H.ToMarkup pageR)
+  => Either pageL pageR
+  -> PageEither pageL pageR
+pageEither = either PageL PageR
+
+instance H.ToMarkup (PageEither pageL pageR) where
+  toMarkup = \case
+    PageL l -> H.toMarkup l
+    PageR r -> H.toMarkup r
 
 -- | Status of the authentication 
 data AuthStat = Authd | Public
