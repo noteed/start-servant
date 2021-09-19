@@ -49,7 +49,7 @@ type TodoListRW = RWView Types.TodoList
 
 instance H.ToMarkup TodoListRW where
   toMarkup (RWView tl) = todoListInvariantMarkup tl
-    $ Shared.titledList "Items" (RWView <$> Types.tlItems tl)
+    $ Shared.titledList H.hr (RWView <$> Types.tlItems tl)
 
 instance H.ToMarkup (RWView Types.TodoItem) where
   toMarkup (RWView Types.TodoItem {..}) = do
@@ -57,12 +57,16 @@ instance H.ToMarkup (RWView Types.TodoItem) where
     H.br
     button H.! A.style "font-weight: lighter; display: block;"
    where
-    button = H.span $ case tiState of
-      Types.Todo       -> H.button "Todo -> Done"
-      Types.InProgress -> H.button "InProgress -> Done"
-      Types.Done       -> Shared.spaceElemsWith
-        H.br
-        [H.button "Done -> Todo", H.button "Done -> InProgress"]
+    button = H.span $ Shared.spaceElemsWith H.br $ case tiState of
+      Types.Todo       -> [mkButton Types.Todo Types.Done]
+      Types.InProgress -> [mkButton Types.InProgress Types.Done]
+      Types.Done ->
+        [mkButton Types.Done Types.Todo, mkButton Types.Done Types.InProgress]
+    mkButton from' to' =
+      let btnText = H.textValue $ show from' <> " -> " <> show to'
+          link'   = H.textValue $ "./item/mark?newState=" <> show to'
+          button' = H.input H.! A.type_ "submit" H.! A.value btnText
+      in  H.form button' H.! A.action link'
 
 newtype ROView resource = ROView resource
 
@@ -70,9 +74,8 @@ newtype ROView resource = ROView resource
 type TodoListRO = ROView Types.TodoList
 
 instance H.ToMarkup TodoListRO where
-  toMarkup (ROView tl) = todoListInvariantMarkup tl $ H.br >> Shared.titledList
-    (H.h3 "Items")
-    (ROView <$> Types.tlItems tl)
+  toMarkup (ROView tl) = todoListInvariantMarkup tl
+    $ Shared.titledList H.hr (ROView <$> Types.tlItems tl)
 
 instance H.ToMarkup (ROView Types.TodoItem) where
   toMarkup (ROView Types.TodoItem {..}) = H.toMarkup tiDescription >> roMsg
@@ -85,7 +88,7 @@ todoListInvariantMarkup :: Types.TodoList -> H.Markup -> H.Markup
 todoListInvariantMarkup Types.TodoList {..} trailing = H.div $ do
   H.h2 $ H.toMarkup @Text tlName
   H.br
-  H.toMarkup numItems
+  H.h3 $ H.toMarkup numItems
   trailing
   where numItems = T.unwords [show $ length tlItems, "items"]
 
