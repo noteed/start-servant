@@ -99,7 +99,11 @@ library
 
       -- New server modules. 
       Prototype.Server.New
+      -- User start page 
       Prototype.Server.New.StartPage
+      -- User Todos pages. 
+      Prototype.Server.New.Todos
+
       Prototype.Server.New.Auth
       Prototype.Server.New.Page 
       Prototype.Server.New.Page.Shared 

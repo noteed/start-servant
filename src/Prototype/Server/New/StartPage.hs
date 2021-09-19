@@ -34,6 +34,7 @@ import qualified Prototype.Server.New.Auth     as Auth
 import           Prototype.Server.New.Page
 import qualified Prototype.Server.New.Page.UserPages
                                                as UP
+import qualified Prototype.Server.New.Todos    as Todos
 import           Prototype.Types
 import           Servant.API
 import qualified Servant.Auth.Server           as SAuth
@@ -101,7 +102,7 @@ type UserPages =
   -- User's welcome screen. 
   "private" :> ( "welcome" :> Get '[B.HTML] (Page 'Authd Profile)
                :<|> "user" :> ( "groups" :> Get '[B.HTML] (Page 'Authd UP.UserGroups)
-                           :<|> "todos" :> Get '[B.HTML] (Page 'Authd UP.UserTodos)
+                           :<|> "todos"  :> Todos.Todos -- The todos API
                               )
                )
 
@@ -111,14 +112,10 @@ type ProtectedC m
 -- | Server for authenticated users. 
 protectedT :: forall m . ProtectedC m => ServerT Protected m
 protectedT (SAuth.Authenticated authdUser@User {..}) =
-  startPage :<|> (showUserGroups :<|> userTodos)
+  startPage :<|> (showUserGroups :<|> Todos.todosT authdUser)
  where
   showUserGroups = pure . AuthdPage authdUser $ UP.UserGroups userGroups
-  userTodos      = do
-    lists <- S.dbSelect $ TodoListsByNamespace (authdUser ^. uUsername)
-    let summaries = UP.TodoListSummary <$> lists
-    pure . AuthdPage authdUser . UP.UserTodos $ summaries
-  startPage = pure . AuthdPage authdUser $ Profile
+  startPage      = pure . AuthdPage authdUser $ Profile
     { namespace   = authdUser ^. uUsername
     , email       = email
     , name        = "TODO" -- TODO 
