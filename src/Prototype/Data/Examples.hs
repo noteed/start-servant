@@ -38,6 +38,7 @@ profAlice = Profile nsAlice
 
 tagEng = Tag "engineering"
 tagAccounting = Tag "accounting"
+tagHR = Tag "HR"
 
 
 -- * Resources
@@ -47,10 +48,24 @@ tagAccounting = Tag "accounting"
 -- | TodoList's Alice has permissions on 
 aliceTodoLists :: [TodoList]
 aliceTodoLists =
-  [ TodoList "TL-1"
-             "start-servant"
-             [TodoItem "Create a test suite" Todo]
-             [tagEng, tagAccounting]
+  [ TodoList
+    "TL-1"
+    "start-servant"
+    [ TodoItem "Create a test suite"       Todo
+    , TodoItem "Have some fun programming" Done
+    ]
+    [tagEng, tagAccounting]
+  , TodoList
+    "TL-0"
+    "Alice read-only"
+    [ TodoItem "Let Alice read this"     Todo
+    , TodoItem "Let Alice read this too" Done
+    ]
+    [tagAccounting]
+  , TodoList "TL-HR0"
+             "HR dept. only"
+             [TodoItem "Only HR dept. can see this" Todo]
+             [tagHR]
   ]
 
 -- | All todolists 
