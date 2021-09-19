@@ -107,7 +107,11 @@ type UserPages =
                )
 
 type ProtectedC m
-  = (Applicative m, MonadError Rt.RuntimeErr m, S.DBStorage m TodoList)
+  = ( Applicative m
+    , MonadError Rt.RuntimeErr m
+    , MonadLog AppName m
+    , S.DBStorage m TodoList
+    )
 
 -- | Server for authenticated users. 
 protectedT :: forall m . ProtectedC m => ServerT Protected m
