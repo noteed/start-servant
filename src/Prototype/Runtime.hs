@@ -31,6 +31,7 @@ module Prototype.Runtime
   , rConf
   , rStorage
   , rLogger
+  , rJwtSettings
   -- * Control
   , AppM(..)
   , PostgresAppM
@@ -47,7 +48,6 @@ import           Control.Lens            hiding ( Level )
 import qualified Crypto.JOSE.JWK               as JWK
 import qualified Data.Map                      as Map
 import qualified Data.Set                      as Set
-import qualified Data.String                   as Str
 import qualified Data.Text                     as T
 -- Needed for handwritten Show instance for Conf
 import qualified GHC.Show
