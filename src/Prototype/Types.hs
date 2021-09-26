@@ -220,7 +220,7 @@ instance S.DBIdentity User where
 
 instance S.DBStorageOps User where
   -- | Kinds of manipulating operations that can be performed on users.
-  data DBUpdate User = CreateNewUser User
+  data DBUpdate User = CreateNewUser Profile Password
                      | DeactivateUser Namespace
                      | AddToGroups Namespace (Set GroupId)
   
@@ -235,7 +235,7 @@ instance Grantee User where
 -- it).
 data Credentials = Credentials
   { username :: Namespace
-  , password :: Secret '[ 'ToJSONExp] Text -- ^ Password, as secret.
+  , password :: Password -- ^ Password, as secret.
   }
   deriving (Eq, Show, Generic)
   deriving anyclass (ToJSON, FromJSON, FromForm)

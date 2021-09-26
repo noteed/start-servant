@@ -19,6 +19,8 @@ module Prototype.Types.Secret
   , exposeSecret
   -- * Compare secrets
   , (=:=)
+  -- * Type aliases for convenience.
+  , Password
   ) where
 
 import           Control.Lens
@@ -97,3 +99,6 @@ deriving via s instance (ToJSON s, HasExp 'ToJSONExp exps) => ToJSON (Secret exp
 Secret s0 =:= Secret s1 = s0 == s1
 
 infix 4 =:=
+
+-- | Type-alias for convenience. A password has no exposures, and is a wrapper over `Text
+type Password = Secret '[] Text

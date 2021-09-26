@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE DataKinds #-}
@@ -18,6 +19,8 @@ module Prototype.Runtime.StmDatabase
   , namespaceGroupsSTM
   , addUsersToGroupIO
   , addUsersToGroupSTM
+  , createUserIO
+  , createUserSTM
   , login
   , getLoggedInProfile
   , getProfileAndLists
@@ -26,13 +29,7 @@ module Prototype.Runtime.StmDatabase
   , getAllTodoLists
   ) where
 
-import           Control.Concurrent.STM         ( STM
-                                                , TVar
-                                                , atomically
-                                                , newTVar
-                                                , readTVar
-                                                , writeTVar
-                                                )
+import qualified Control.Concurrent.STM        as STM
 import           Data.List                      ( nub
                                                 , sort
                                                 )
@@ -41,10 +38,12 @@ import           Data.Maybe                     ( catMaybes )
 import qualified Data.Set                      as Set
 import qualified ListT
 import           ListT                          ( toList )
+import qualified Network.HTTP.Types.Status     as Stat
 import           Prelude                 hiding ( Handle
                                                 , toList
                                                 )
 import           Prototype.ACL                  ( GroupId )
+import qualified Prototype.Runtime.Errors      as Errs
 import           Prototype.Types.Secret
 import qualified StmContainers.Map             as STM
                                                 ( Map )
@@ -57,12 +56,12 @@ import           Prototype.Types
 --------------------------------------------------------------------------------
 
 data Handle = Handle
-  { hCounter            :: TVar Counter
-  , hSessions           :: TVar [Session]
+  { hCounter            :: STM.TVar Counter
+  , hSessions           :: STM.TVar [Session]
     -- ^ This is only to keep track of logged in users. It means that in
     -- addition of having a User set in a cookie, the corresponding session
     -- must be present here.
-  , hUsers              :: TVar [(Secret '[] Text, Profile)]
+  , hUsers              :: STM.TVar [(Password, Profile)]
   , hUserGroups         :: STM.Map GroupId (Set Namespace) -- ^ Users and their groups. 
     -- ^ Password, and User. Those are real users. We don't store the password
     -- in a specific data type to avoid manipulating it and risking sending it
@@ -101,22 +100,22 @@ namespaceGroupsSTM Handle { hUserGroups = STM.Map.listT -> hUserGroups } ns =
     pure $ if ns `elem` users then acc `Set.union` (Set.singleton gid) else acc
 
 --------------------------------------------------------------------------------
-newCounter = newTVar (Counter 1)
+newCounter = STM.newTVar (Counter 1)
 
-getCounter h = readTVar (hCounter h)
+getCounter h = STM.readTVar (hCounter h)
 
 bumpCounter h = do
-  Counter i <- readTVar (hCounter h)
-  writeTVar (hCounter h) (Counter $ i + 1)
+  Counter i <- STM.readTVar (hCounter h)
+  STM.writeTVar (hCounter h) (Counter $ i + 1)
 
 --------------------------------------------------------------------------------
 getProfiles :: Handle -> STM [Profile]
 getProfiles h = do
-  users <- readTVar (hUsers h)
+  users <- STM.readTVar (hUsers h)
   return (map snd users)
 
 getProfile h namespace_ = do
-  users <- readTVar (hUsers h)
+  users <- STM.readTVar (hUsers h)
   return (lookup' users)
  where
 
@@ -182,25 +181,25 @@ newNamespaceTodoLists = do
 
 
 --------------------------------------------------------------------------------
-newSessions :: STM (TVar [Session])
-newSessions = newTVar []
+newSessions :: STM (STM.TVar [Session])
+newSessions = STM.newTVar []
   -- TODO Each Session should be in its own TVar.
 
 getSessions :: Handle -> STM [Session]
-getSessions = readTVar . hSessions
+getSessions = STM.readTVar . hSessions
 
 -- In addition of `authenticateProfile`, we can call this function create a
 -- session.
 addSession h (username :: Namespace) = do
-  sessions <- readTVar (hSessions h)
-  writeTVar (hSessions h) (addSession' sessions (Session username))
+  sessions <- STM.readTVar (hSessions h)
+  STM.writeTVar (hSessions h) (addSession' sessions (Session username))
 
 addSession' :: [Session] -> Session -> [Session]
 addSession' ss s = sort (nub (s : ss))
 
 
 --------------------------------------------------------------------------------
-newUsers = newTVar Examples.users
+newUsers = STM.newTVar Examples.users
 
 newUserGroupsSTM :: STM (STM.Map GroupId (Set Namespace))
 newUserGroupsSTM = do
@@ -224,13 +223,37 @@ addUsersToGroupIO
   -> m ()
 addUsersToGroupIO m gid = liftIO . atomically . addUsersToGroupSTM m gid
 
+-- | Create a new user 
+createUserSTM
+  :: Profile
+  -> Password
+  -> STM.TVar [(Password, Profile)]
+  -> STM (Maybe StmStorageErr)
+createUserSTM p pwd profPwds = do
+  -- First, get all existing users to identify namespace collissions. 
+  profs <- fmap snd <$> STM.readTVar profPwds
+  let coll = find ((== newNs) . namespace) profs
+  if isJust coll
+    then pure (Just . NamespaceCollission $ newNs)
+    else STM.modifyTVar' profPwds ((pwd, p) :) $> Nothing
+  where newNs = namespace p
+
+-- | Create a new  user 
+createUserIO
+  :: MonadIO m
+  => Profile
+  -> Password
+  -> STM.TVar [(Password, Profile)]
+  -> m (Maybe StmStorageErr)
+createUserIO p pwd = liftIO . atomically . createUserSTM p pwd
+
   -- TODO Each Profile should be in its own TVar.
 
-getUsers h = readTVar (hUsers h)
+getUsers h = STM.readTVar (hUsers h)
 
 --------------------------------------------------------------------------------
 login h credentials = do
-  profiles <- readTVar (hUsers h)
+  profiles <- STM.readTVar (hUsers h)
   case authenticateProfile credentials profiles of
     Just Profile {..} -> do
       addSession h namespace
@@ -277,3 +300,13 @@ lookupSession user sessions = case filter f sessions of
   [s] -> Just s
   _   -> Nothing
   where f session = username (session :: Session) == username (user :: User)
+
+newtype StmStorageErr = NamespaceCollission Namespace
+                      deriving Show
+
+instance Errs.IsRuntimeErr StmStorageErr where
+  errCode NamespaceCollission{} = "ERR.STM_STORAGE.NAMESPACE_EXISTS"
+  httpStatus = \case
+    NamespaceCollission{} -> Stat.conflict409
+  userMessage = Just . \case
+    NamespaceCollission ns -> "Namespace taken: " <> show ns

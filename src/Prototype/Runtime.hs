@@ -207,7 +207,11 @@ instance S.DBStorage StmAppM Ptypes.User where
 
   -- All of these are stubs that should be implemented.
   dbUpdate up = withStorage $ case up of
-    CreateNewUser  u                 -> undefined
+    CreateNewUser p pwd -> insertNewUser . Db.hUsers
+     where
+      insertNewUser tvar =
+        Db.createUserIO p pwd tvar
+          >>= maybe (pure [Ptypes.namespace p]) throwError'
     DeactivateUser uid               -> undefined
     AddToGroups uid (toList -> gids) -> addToGroups
      where
