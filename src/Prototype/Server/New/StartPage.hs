@@ -128,8 +128,14 @@ protectedT (SAuth.Authenticated authdUser@User {..}) =
     , name        = "TODO" -- TODO 
     , profTagRels = authdUser ^. uUserTagRels
     }
-protectedT authFailed = dispErr :<|> dispErr :<|> dispErr :<|> (const dispErr {- move to Todo module -}
-                                                                             )
+protectedT authFailed =
+  dispErr
+    :<|> dispErr
+    :<|> dispErr
+    :<|> (    const
+         $    dispErr {- move to Todo module -}:<|> const dispErr
+         )
+
  where
   dispErr :: forall m' a . MonadError Rt.RuntimeErr m' => m' a
   dispErr = Rt.throwError' . AuthFailed $ show authFailed
