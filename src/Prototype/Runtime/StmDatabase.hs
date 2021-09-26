@@ -33,10 +33,12 @@ module Prototype.Runtime.StmDatabase
   -- ** TodoLists 
   , markItemSTM
   , markItemIO
+  , addItemSTM
+  , addItemIO
   ) where
 
 import qualified Control.Concurrent.STM        as STM
-import           Control.Lens
+import           Control.Lens                  as Lens
 import           Data.List                      ( nub
                                                 , sort
                                                 )
@@ -326,6 +328,16 @@ instance Errs.IsRuntimeErr StmStorageErr where
     NamespaceCollission ns  -> Just $ "Namespace taken: " <> show ns
     RelatedErr          re' -> Errs.userMessage re'
 
+-- | Perform an operation with a list, if found.
+withTodoListSTM
+  :: TodoListId
+  -> STM.Map TodoListId TodoList
+  -> (TodoList -> STM (Maybe StmStorageErr))
+  -> STM (Maybe StmStorageErr)
+withTodoListSTM lid lists withList =
+  STM.Map.lookup lid lists >>= maybe noList withList
+  where noList = pure . Just . RelatedErr $ NoSuchTodoList lid
+
 -- | Mark a todolist item with a new `TodoState`
 markItemSTM
   :: TodoListId
@@ -333,8 +345,7 @@ markItemSTM
   -> TodoState
   -> STM.Map TodoListId TodoList
   -> STM (Maybe StmStorageErr)
-markItemSTM lid iid state' lists =
-  STM.Map.lookup lid lists >>= maybe noList markInList
+markItemSTM lid iid state' lists = withTodoListSTM lid lists markInList
  where
    -- Traverse the items of the list and set the state.
    -- We use the extremely powerful traversals that let us target the matching items & modify them in-place.
@@ -347,8 +358,6 @@ markItemSTM lid iid state' lists =
           then STM.Map.insert updatedList lid lists $> Nothing
           else noItem
   hasId  = (iid ==) . _tiId
-
-  noList = pure . Just . RelatedErr $ NoSuchTodoList lid
   noItem = pure . Just . RelatedErr $ NoSuchItem lid iid
 
 markItemIO
@@ -359,3 +368,29 @@ markItemIO
   -> STM.Map TodoListId TodoList
   -> m (Maybe StmStorageErr)
 markItemIO lid iid state' = liftIO . atomically . markItemSTM lid iid state'
+
+-- | Add a new item to a todo-list, if it exists.
+addItemSTM
+  :: TodoListId
+  -> TodoItem
+  -> STM.Map TodoListId TodoList
+  -> STM (Maybe StmStorageErr)
+addItemSTM lid item lists = withTodoListSTM lid lists insertItem
+ where
+  insertItem list' =
+    let mCollission = headMay $ list' ^. tlItems ^.. folded . filtered sameId
+    in  case mCollission of
+          Nothing ->
+            let newList = list' & tlItems %~ (item :)
+            in  STM.Map.insert newList lid lists $> Nothing
+          Just _ -> pure . Just . RelatedErr $ ItemIdCollission lid newItemId
+  newItemId = item ^. tiId
+  sameId    = (== newItemId) . _tiId
+
+addItemIO
+  :: MonadIO m
+  => TodoListId
+  -> TodoItem
+  -> STM.Map TodoListId TodoList
+  -> m (Maybe StmStorageErr)
+addItemIO lid item = liftIO . atomically . addItemSTM lid item

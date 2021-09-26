@@ -145,6 +145,7 @@ data TodoState = Todo | InProgress | Done
 
 data TodoListErr = NoSuchTodoList TodoListId
                  | NoSuchItem TodoListId TodoItemId
+                 | ItemIdCollission TodoListId TodoItemId
                  deriving Show
 
 instance IsRuntimeErr TodoListErr where

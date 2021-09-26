@@ -231,8 +231,9 @@ instance S.DBStorage StmAppM Ptypes.TodoList where
       Db.markItemIO lid iid state'
         .   Db.hTodoLists
         >=> maybe (pure [lid]) throwError'
-    AddItem    lid item -> undefined
-    DeleteItem lid iid  -> undefined
+    AddItem lid item ->
+      Db.addItemIO lid item . Db.hTodoLists >=> maybe (pure [lid]) throwError'
+    DeleteItem lid iid -> undefined
 
   dbSelect = \case
     AllTodoLists ->
