@@ -13,11 +13,13 @@ module Prototype.Server.New.Page.UserPages
   , TodoListRO
   ) where
 
+import           Control.Lens                  as Lens
 import qualified Data.Text                     as T
 import qualified Prototype.ACL                 as ACL
 import qualified Prototype.Server.New.Page.Shared
                                                as Shared
 import qualified Prototype.Types               as Types
+import           Prototype.Types.NonEmptyText
 import qualified Text.Blaze.Html5              as H
 import qualified Text.Blaze.Html5.Attributes   as A
 
@@ -64,7 +66,13 @@ instance H.ToMarkup (RWView Types.TodoItem) where
         [mkButton Types.Done Types.Todo, mkButton Types.Done Types.InProgress]
     mkButton from' to' =
       let btnText = H.textValue $ show from' <> " -> " <> show to'
-          link'   = H.textValue $ "./item/mark?newState=" <> show to'
+          link'   = H.textValue $ T.intercalate
+            "/"
+            [ "."
+            , "item"
+            , _tiId ^. Lens.to Types._unTodoItemId . unNonEmptyText
+            , "mark?newState=" <> show to'
+            ]
           button' = H.input H.! A.type_ "submit" H.! A.value btnText
       in  H.form button' H.! A.action link'
 
