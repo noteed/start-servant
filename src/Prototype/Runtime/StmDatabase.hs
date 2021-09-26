@@ -35,6 +35,8 @@ module Prototype.Runtime.StmDatabase
   , markItemIO
   , addItemSTM
   , addItemIO
+  , deleteItemSTM
+  , deleteItemIO
   ) where
 
 import qualified Control.Concurrent.STM        as STM
@@ -394,3 +396,27 @@ addItemIO
   -> STM.Map TodoListId TodoList
   -> m (Maybe StmStorageErr)
 addItemIO lid item = liftIO . atomically . addItemSTM lid item
+
+-- | Delete an item from a todo-list
+deleteItemSTM
+  :: TodoListId
+  -> TodoItemId
+  -> STM.Map TodoListId TodoList
+  -> STM (Maybe StmStorageErr)
+deleteItemSTM lid iid lists = withTodoListSTM lid lists delItem
+ where
+  delItem oldList =
+    let updatedList = oldList & tlItems %~ filter (not . (== iid) . _tiId)
+    in  if oldList /= updatedList
+          then STM.Map.insert updatedList lid lists $> Nothing
+          else noItem
+
+  noItem = pure . Just . RelatedErr $ NoSuchItem lid iid
+
+deleteItemIO
+  :: MonadIO m
+  => TodoListId
+  -> TodoItemId
+  -> STM.Map TodoListId TodoList
+  -> m (Maybe StmStorageErr)
+deleteItemIO lid iid = liftIO . atomically . deleteItemSTM lid iid
