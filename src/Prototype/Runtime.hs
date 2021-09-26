@@ -210,9 +210,9 @@ instance S.DBStorage StmAppM Ptypes.User where
     CreateNewUser p pwd -> insertNewUser . Db.hUsers
      where
       insertNewUser tvar =
-        Db.createUserIO p pwd tvar
-          >>= maybe (pure [Ptypes.namespace p]) throwError'
-    DeactivateUser uid               -> undefined
+        Db.createUserIO p pwd tvar >>= maybe reportId throwError'
+      reportId = pure [Ptypes.namespace p]
+
     AddToGroups uid (toList -> gids) -> addToGroups
      where
       addToGroups Db.Handle {..} = mapM addToGroup gids

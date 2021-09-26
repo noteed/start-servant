@@ -221,7 +221,6 @@ instance S.DBIdentity User where
 instance S.DBStorageOps User where
   -- | Kinds of manipulating operations that can be performed on users.
   data DBUpdate User = CreateNewUser Profile Password
-                     | DeactivateUser Namespace
                      | AddToGroups Namespace (Set GroupId)
   
   -- | Ways to select user(s)
