@@ -32,10 +32,10 @@ instance H.ToMarkup TodoListSummary where
   toMarkup (TodoListSummary Types.TodoList {..}) = H.a (H.toMarkup @Text text)
     H.! A.href link'
    where
-    numItems = show $ length tlItems
+    numItems = show $ length _tlItems
     text =
-      T.unwords ["Name:", tlName, "with", "(" <> numItems <> ")", "items."]
-    link' = H.toValue $ "/private/user/todos/" <> tlId
+      T.unwords ["Name:", _tlName, "with", "(" <> numItems <> ")", "items."]
+    link' = H.toValue $ "/private/user/todos/" <> _tlId
 
 newtype UserTodos = UserTodos [TodoListSummary]
 
@@ -49,15 +49,15 @@ type TodoListRW = RWView Types.TodoList
 
 instance H.ToMarkup TodoListRW where
   toMarkup (RWView tl) = todoListInvariantMarkup tl
-    $ Shared.titledList H.hr (RWView <$> Types.tlItems tl)
+    $ Shared.titledList H.hr (RWView <$> Types._tlItems tl)
 
 instance H.ToMarkup (RWView Types.TodoItem) where
   toMarkup (RWView Types.TodoItem {..}) = do
-    H.toMarkup tiDescription
+    H.toMarkup _tiDescription
     H.br
     button H.! A.style "font-weight: lighter; display: block;"
    where
-    button = H.span $ Shared.spaceElemsWith H.br $ case tiState of
+    button = H.span $ Shared.spaceElemsWith H.br $ case _tiState of
       Types.Todo       -> [mkButton Types.Todo Types.Done]
       Types.InProgress -> [mkButton Types.InProgress Types.Done]
       Types.Done ->
@@ -75,10 +75,10 @@ type TodoListRO = ROView Types.TodoList
 
 instance H.ToMarkup TodoListRO where
   toMarkup (ROView tl) = todoListInvariantMarkup tl
-    $ Shared.titledList H.hr (ROView <$> Types.tlItems tl)
+    $ Shared.titledList H.hr (ROView <$> Types._tlItems tl)
 
 instance H.ToMarkup (ROView Types.TodoItem) where
-  toMarkup (ROView Types.TodoItem {..}) = H.toMarkup tiDescription >> roMsg
+  toMarkup (ROView Types.TodoItem {..}) = H.toMarkup _tiDescription >> roMsg
    where
     roMsg = (H.span " (Item in Read-only mode)") H.! A.style
       "font-weight: lighter; display: block; background-color: bisque;"
@@ -86,9 +86,9 @@ instance H.ToMarkup (ROView Types.TodoItem) where
 -- | The part of the TodoList markup that doesn't change; along with some additional markup.
 todoListInvariantMarkup :: Types.TodoList -> H.Markup -> H.Markup
 todoListInvariantMarkup Types.TodoList {..} trailing = H.div $ do
-  H.h2 $ H.toMarkup @Text tlName
+  H.h2 $ H.toMarkup @Text _tlName
   H.br
   H.h3 $ H.toMarkup numItems
   trailing
-  where numItems = T.unwords [show $ length tlItems, "items"]
+  where numItems = T.unwords [show $ length _tlItems, "items"]
 

@@ -1,3 +1,4 @@
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -30,6 +31,7 @@ module Prototype.Runtime.StmDatabase
   ) where
 
 import qualified Control.Concurrent.STM        as STM
+import           Control.Lens                  as L
 import           Data.List                      ( nub
                                                 , sort
                                                 )
@@ -152,7 +154,7 @@ newTodoLists = do
   m <- STM.Map.new
   mapM_ (`insertList` m) Examples.allTodoLists
   return m
-  where insertList tl@TodoList {..} = STM.Map.insert tl tlId
+  where insertList tl@TodoList {..} = STM.Map.insert tl _tlId
 
 getAllTodoLists :: Handle -> STM [(TodoListId, TodoList)]
 getAllTodoLists = toList . STM.Map.listT . hTodoLists
@@ -170,7 +172,7 @@ getTodoLists h namespace = do
 getTodoList :: Handle -> Namespace -> Text -> STM (Maybe TodoList)
 getTodoList h namespace listname = do
   lists <- getTodoLists h namespace
-  pure $ case filter ((listname ==) . tlName) lists of
+  pure $ case filter ((listname ==) . _tlName) lists of
     [list'] -> Just list'
     _       -> Nothing
 
@@ -301,12 +303,43 @@ lookupSession user sessions = case filter f sessions of
   _   -> Nothing
   where f session = username (session :: Session) == username (user :: User)
 
-newtype StmStorageErr = NamespaceCollission Namespace
-                      deriving Show
+data StmStorageErr where
+  NamespaceCollission ::Namespace -> StmStorageErr
+  RelatedErr ::(Errs.IsRuntimeErr err, Show err) => err -> StmStorageErr
+
+deriving instance Show StmStorageErr
 
 instance Errs.IsRuntimeErr StmStorageErr where
-  errCode NamespaceCollission{} = "ERR.STM_STORAGE.NAMESPACE_EXISTS"
+  errCode = \case
+    NamespaceCollission{} -> specificCode "NAMESPACE_EXISTS"
+    RelatedErr re         -> Errs.errCode re
+    where specificCode = mappend "ERR.STM_STORAGE"
   httpStatus = \case
     NamespaceCollission{} -> Stat.conflict409
-  userMessage = Just . \case
-    NamespaceCollission ns -> "Namespace taken: " <> show ns
+    RelatedErr re         -> Errs.httpStatus re
+  userMessage = \case
+    NamespaceCollission ns -> Just $ "Namespace taken: " <> show ns
+    RelatedErr          re -> Errs.userMessage re
+
+-- markItemSTM
+--   :: TodoListId
+--   -> TodoItemId
+--   -> STM.Map TodoListId TodoList
+--   -> STM (Maybe StmStorageErr)
+-- markItemSTM lid iid lists =
+--   STM.Map.lookup lid lists >>= maybe noList markInList
+--  where
+--   markInList list@TodoList { _tlItems } =
+--     let updatedList :: TodoList =
+--           list
+--             $   L.to _tlItems
+--             ^.. folded
+--             .   filtered hasId
+--             &   (undefined :: [TodoItem] -> [TodoItem]) -- (L.to tiState) .~ undefined   -- . findOf undefined 
+--     in  undefined
+--   hasId  = (iid ==) . tiId
+--     -- maybe noItem undefined $ find ((== iid) . tiId) _tlItems
+
+--   noList = pure . Just . RelatedErr $ NoSuchTodoList lid
+--   -- noItem = pure . Just . RelatedErr $ NoSuchItem lid iid
+

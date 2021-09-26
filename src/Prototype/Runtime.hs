@@ -206,7 +206,7 @@ instance ACL.GroupedGrantee StmAppM Ptypes.Profile where
 instance S.DBStorage StmAppM Ptypes.User where
 
   -- All of these are stubs that should be implemented.
-  dbUpdate up = withStorage $ case up of
+  dbUpdate = withStorage . \case
     CreateNewUser p pwd -> insertNewUser . Db.hUsers
      where
       insertNewUser tvar =
@@ -226,7 +226,10 @@ instance S.DBStorage StmAppM Ptypes.User where
 -- | Storage operations for todolists 
 instance S.DBStorage StmAppM Ptypes.TodoList where
 
-  dbUpdate = undefined
+  dbUpdate = withStorage . \case
+    MarkItem lid iid state -> undefined
+    AddItem    lid item    -> undefined
+    DeleteItem lid iid     -> undefined
 
   dbSelect = \case
     AllTodoLists ->

@@ -14,7 +14,15 @@ module Prototype.Types
   ( Counter(..)
   , TodoListId(..)
   , TodoList(..)
+  , tlId
+  , tlName
+  , tlItems
+  , tlTags
+  , TodoItemId(..)
   , TodoItem(..)
+  , tiId
+  , tiDescription
+  , tiState
   , TodoState(..)
   , TodoListErr(..)
   , Operation(..)
@@ -74,58 +82,84 @@ newtype TodoListId = TodoListId { _unTodoListId :: NonEmptyText }
                             ) via NonEmptyText
 
 data TodoList = TodoList
-  { tlId    :: TodoListId
-  , tlName  :: Text
-  , tlItems :: [TodoItem]
-  , tlTags  :: Set Tag
+  { _tlId    :: TodoListId
+  , _tlName  :: Text
+  , _tlItems :: [TodoItem]
+  , _tlTags  :: Set Tag
   }
   deriving (Show, Eq, Ord, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 instance H.ToMarkup TodoList where
   toMarkup TodoList {..} = do
-    H.toMarkup tlName
+    H.toMarkup _tlName
     -- TODO properly format. 
-    H.toMarkup @Text $ show tlItems
+    H.toMarkup @Text $ show _tlItems
 
 instance Resource TodoList where
-  resourceTags = tlTags
+  resourceTags = _tlTags
 
 instance S.DBIdentity TodoList where
   type DBId TodoList = TodoListId
-  dbId = tlId
+  dbId = _tlId
 
 instance S.DBStorageOps TodoList where
-  -- TODO 
-  data DBUpdate TodoList
+  data DBUpdate TodoList =
+    -- | Mark an item in a todo-list.
+    MarkItem TodoListId TodoItemId TodoState
+    | AddItem TodoListId TodoItem
+    | DeleteItem TodoListId TodoItemId
+  
   data DBSelect TodoList =
     -- | Get the list by a user.
     TodoListsByNamespace Namespace
     | AllTodoLists
 
+newtype TodoItemId = TodoItemId { _unTodoItemId :: NonEmptyText }
+                   deriving ( Eq
+                            , Show
+                            , Ord
+                            , IsString
+                            , ToMarkup
+                            , Semigroup
+                            , H.ToValue
+                            , ToHttpApiData
+                            , FromHttpApiData
+                            , Hashable
+                            , ToJSON
+                            , FromJSON
+                            ) via NonEmptyText
+
 data TodoItem = TodoItem
-  { tiDescription :: Text
-  , tiState       :: TodoState
+  { _tiId          :: TodoItemId
+  , _tiDescription :: Text
+  , _tiState       :: TodoState
   }
-  deriving (Show, Eq, Ord, Read, Generic)
+  deriving (Show, Eq, Ord, Generic)
   deriving anyclass (ToJSON, FromJSON)
+
 
 data TodoState = Todo | InProgress | Done
   deriving (Show, Eq, Ord, Read, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
-newtype TodoListErr = NoSuchTodoList TodoListId
-                    deriving Show
+data TodoListErr = NoSuchTodoList TodoListId
+                 | NoSuchItem TodoListId TodoItemId
+                 deriving Show
 
 instance IsRuntimeErr TodoListErr where
   httpStatus = \case
     NoSuchTodoList{} -> notFound404
+    NoSuchItem{}     -> notFound404
 
   userMessage = Just . \case
     NoSuchTodoList id -> "No todo-list with id = " <> show id
+    NoSuchItem lid iid ->
+      "No todo-list-item with id = " <> show iid <> " in list = " <> show lid
 
   errCode = errCode' . \case
-    NoSuchTodoList{} -> "TODO_LIST_NOT_FOUND"
+    NoSuchTodoList{} -> "LIST_NOT_FOUND"
+    NoSuchItem{}     -> "ITEM_NOT_FOUND"
     where errCode' = mappend "ERR.TODO_LIST"
 
 
@@ -261,8 +295,6 @@ instance IsRuntimeErr UserErr where
     NoSuchUser       ns  -> "User not found by id: " <> show ns
     where addMsg = sentence . mappend "Unable to authenticate: "
 
-
-
-
-
+makeLenses ''TodoList
+makeLenses ''TodoItem
 

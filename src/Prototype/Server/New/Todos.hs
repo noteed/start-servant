@@ -43,7 +43,7 @@ todosT authdUser =
 
   viewTodo id = do
     lists <- S.dbSelect $ TodoListsByNamespace (authdUser ^. uUsername)
-    case find ((== id) . tlId) lists of 
+    case find ((== id) . _tlId) lists of 
       Just tl ->
         let asRO = ACL.authorize @'ACL.TagRead authdUser tl 
             asRW = ACL.authorize @'ACL.TagWrite authdUser tl 

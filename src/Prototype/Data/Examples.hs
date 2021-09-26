@@ -58,20 +58,20 @@ aliceTodoLists =
   [ TodoList
     "TL-1"
     "start-servant"
-    [ TodoItem "Create a test suite"       Todo
-    , TodoItem "Have some fun programming" Done
+    [ TodoItem "item0" "Create a test suite"       Todo
+    , TodoItem "item1" "Have some fun programming" Done
     ]
     [tagEng, tagAccounting]
   , TodoList
     "TL-0"
     "Alice read-only"
-    [ TodoItem "Let Alice read this"     Todo
-    , TodoItem "Let Alice read this too" Done
+    [ TodoItem "item0" "Let Alice read this"     Todo
+    , TodoItem "item1" "Let Alice read this too" Done
     ]
     [tagAccounting]
   , TodoList "TL-HR0"
              "HR dept. only"
-             [TodoItem "Only HR dept. can see this" Todo]
+             [TodoItem "item0" "Only HR dept. can see this" Todo]
              [tagHR]
   ]
 
@@ -81,4 +81,4 @@ allTodoLists = aliceTodoLists
 
 -- | User resources: todolists that the users have permissions on. 
 todoListPermissions :: [(Namespace, [TodoListId])]
-todoListPermissions = [(nsAlice, tlId <$> aliceTodoLists)]
+todoListPermissions = [(nsAlice, _tlId <$> aliceTodoLists)]
