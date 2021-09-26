@@ -227,9 +227,12 @@ instance S.DBStorage StmAppM Ptypes.User where
 instance S.DBStorage StmAppM Ptypes.TodoList where
 
   dbUpdate = withStorage . \case
-    MarkItem lid iid state -> undefined
-    AddItem    lid item    -> undefined
-    DeleteItem lid iid     -> undefined
+    MarkItem lid iid state' ->
+      Db.markItemIO lid iid state'
+        .   Db.hTodoLists
+        >=> maybe (pure [lid]) throwError'
+    AddItem    lid item -> undefined
+    DeleteItem lid iid  -> undefined
 
   dbSelect = \case
     AllTodoLists ->

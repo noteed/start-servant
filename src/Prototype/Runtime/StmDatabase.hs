@@ -16,22 +16,27 @@ module Prototype.Runtime.StmDatabase
   , getProfiles
   , getProfile
   , newCounter
-  , namespaceGroupsIO
-  , namespaceGroupsSTM
-  , addUsersToGroupIO
-  , addUsersToGroupSTM
-  , createUserIO
-  , createUserSTM
   , login
   , getLoggedInProfile
   , getProfileAndLists
   , getProfileAndList
   , getSessions
   , getAllTodoLists
+  -- * Commonly used updates
+  -- ** User
+  , namespaceGroupsIO
+  , namespaceGroupsSTM
+  , addUsersToGroupIO
+  , addUsersToGroupSTM
+  , createUserIO
+  , createUserSTM
+  -- ** TodoLists 
+  , markItemSTM
+  , markItemIO
   ) where
 
 import qualified Control.Concurrent.STM        as STM
-import           Control.Lens                  as L
+import           Control.Lens
 import           Data.List                      ( nub
                                                 , sort
                                                 )
@@ -312,34 +317,45 @@ deriving instance Show StmStorageErr
 instance Errs.IsRuntimeErr StmStorageErr where
   errCode = \case
     NamespaceCollission{} -> specificCode "NAMESPACE_EXISTS"
-    RelatedErr re         -> Errs.errCode re
+    RelatedErr re'        -> Errs.errCode re'
     where specificCode = mappend "ERR.STM_STORAGE"
   httpStatus = \case
     NamespaceCollission{} -> Stat.conflict409
-    RelatedErr re         -> Errs.httpStatus re
+    RelatedErr re'        -> Errs.httpStatus re'
   userMessage = \case
-    NamespaceCollission ns -> Just $ "Namespace taken: " <> show ns
-    RelatedErr          re -> Errs.userMessage re
+    NamespaceCollission ns  -> Just $ "Namespace taken: " <> show ns
+    RelatedErr          re' -> Errs.userMessage re'
 
--- markItemSTM
---   :: TodoListId
---   -> TodoItemId
---   -> STM.Map TodoListId TodoList
---   -> STM (Maybe StmStorageErr)
--- markItemSTM lid iid lists =
---   STM.Map.lookup lid lists >>= maybe noList markInList
---  where
---   markInList list@TodoList { _tlItems } =
---     let updatedList :: TodoList =
---           list
---             $   L.to _tlItems
---             ^.. folded
---             .   filtered hasId
---             &   (undefined :: [TodoItem] -> [TodoItem]) -- (L.to tiState) .~ undefined   -- . findOf undefined 
---     in  undefined
---   hasId  = (iid ==) . tiId
---     -- maybe noItem undefined $ find ((== iid) . tiId) _tlItems
+-- | Mark a todolist item with a new `TodoState`
+markItemSTM
+  :: TodoListId
+  -> TodoItemId
+  -> TodoState
+  -> STM.Map TodoListId TodoList
+  -> STM (Maybe StmStorageErr)
+markItemSTM lid iid state' lists =
+  STM.Map.lookup lid lists >>= maybe noList markInList
+ where
+   -- Traverse the items of the list and set the state.
+   -- We use the extremely powerful traversals that let us target the matching items & modify them in-place.
+  markInList oldList =
+    let updatedList =
+          oldList & tlItems %~ traverse . filtered hasId %~ set tiState state'
+    -- Finally, we'd like to see if we did affect some items; if no items were affected
+    -- we can assume that the item already had the given state, or was not present.
+    in  if oldList /= updatedList
+          then STM.Map.insert updatedList lid lists $> Nothing
+          else noItem
+  hasId  = (iid ==) . _tiId
 
---   noList = pure . Just . RelatedErr $ NoSuchTodoList lid
---   -- noItem = pure . Just . RelatedErr $ NoSuchItem lid iid
+  noList = pure . Just . RelatedErr $ NoSuchTodoList lid
+  noItem = pure . Just . RelatedErr $ NoSuchItem lid iid
 
+markItemIO
+  :: MonadIO m
+  => TodoListId
+  -> TodoItemId
+  -> TodoState
+  -> STM.Map TodoListId TodoList
+  -> m (Maybe StmStorageErr)
+markItemIO lid iid state' = liftIO . atomically . markItemSTM lid iid state'
