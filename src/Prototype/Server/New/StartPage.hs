@@ -27,6 +27,7 @@ module Prototype.Server.New.StartPage
   ) where
 
 import           Control.Lens
+import qualified Prototype.ACL                 as ACL
 import qualified Prototype.Runtime             as Rt
 import qualified Prototype.Runtime.Errors      as Rt
 import qualified Prototype.Runtime.Storage     as S
@@ -111,6 +112,7 @@ type ProtectedC m
     , MonadError Rt.RuntimeErr m
     , MonadLog AppName m
     , S.DBStorage m TodoList
+    , ACL.GroupedGrantee m User
     )
 
 -- | Server for authenticated users. 
@@ -118,12 +120,12 @@ protectedT :: forall m . ProtectedC m => ServerT Protected m
 protectedT (SAuth.Authenticated authdUser@User {..}) =
   startPage :<|> (showUserGroups :<|> Todos.todosT authdUser)
  where
-  showUserGroups = pure . AuthdPage authdUser $ UP.UserGroups userGroups
-  startPage      = pure . AuthdPage authdUser $ Profile
+  showUserGroups =
+    AuthdPage authdUser . UP.UserGroups <$> ACL.granteeGroups authdUser
+  startPage = pure . AuthdPage authdUser $ Profile
     { namespace   = authdUser ^. uUsername
     , email       = email
     , name        = "TODO" -- TODO 
-    , profGroups  = userGroups
     , profTagRels = authdUser ^. uUserTagRels
     }
 protectedT authFailed = dispErr :<|> dispErr :<|> dispErr :<|> (const dispErr {- move to Todo module -}

@@ -70,13 +70,13 @@ class Grantee g where
   granteeTags :: g -> TagRels
 
 -- | A grantee that is a member of some groups.
-class Grantee g => GroupedGrantee g where
+class Grantee g => GroupedGrantee m g where
 
   -- | The groups the grantee belongs to.
-  granteeGroups :: g -> Set GroupId
+  granteeGroups :: g -> m (Set GroupId)
 
 -- | Operations on grantees in some @m@
-class GroupedGrantee g => GroupedGranteeOps m g where
+class GroupedGrantee m g => GroupedGranteeOps m g where
 
   -- | Add grantee to some groups
   granteeAddToGroups :: g -> Set GroupId -> m g

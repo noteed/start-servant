@@ -1,3 +1,5 @@
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -12,6 +14,10 @@ module Prototype.Runtime.StmDatabase
   , getProfiles
   , getProfile
   , newCounter
+  , namespaceGroupsIO
+  , namespaceGroupsSTM
+  , addUsersToGroupIO
+  , addUsersToGroupSTM
   , login
   , getLoggedInProfile
   , getProfileAndLists
@@ -30,11 +36,15 @@ import           Control.Concurrent.STM         ( STM
 import           Data.List                      ( nub
                                                 , sort
                                                 )
+import qualified Data.Map                      as Map
 import           Data.Maybe                     ( catMaybes )
+import qualified Data.Set                      as Set
+import qualified ListT
 import           ListT                          ( toList )
 import           Prelude                 hiding ( Handle
                                                 , toList
                                                 )
+import           Prototype.ACL                  ( GroupId )
 import           Prototype.Types.Secret
 import qualified StmContainers.Map             as STM
                                                 ( Map )
@@ -53,6 +63,7 @@ data Handle = Handle
     -- addition of having a User set in a cookie, the corresponding session
     -- must be present here.
   , hUsers              :: TVar [(Secret '[] Text, Profile)]
+  , hUserGroups         :: STM.Map GroupId (Set Namespace) -- ^ Users and their groups. 
     -- ^ Password, and User. Those are real users. We don't store the password
     -- in a specific data type to avoid manipulating it and risking sending it
     -- over the wire.
@@ -69,6 +80,7 @@ newHandle = liftIO . atomically $ do
   hCounter            <- newCounter
   hSessions           <- newSessions
   hUsers              <- newUsers
+  hUserGroups         <- newUserGroupsSTM
   hTodoLists          <- newTodoLists
   hNamespaceTodoLists <- newNamespaceTodoLists
   return Handle { .. }
@@ -76,6 +88,17 @@ newHandle = liftIO . atomically $ do
 apply :: Handle -> Operation -> STM ()
 apply h BumpCounter = bumpCounter h
 
+-- | Get the groups a particular namespace (user) is associated with.
+namespaceGroupsIO :: MonadIO m => Handle -> Namespace -> m (Set GroupId)
+namespaceGroupsIO h = liftIO . atomically . namespaceGroupsSTM h
+
+-- | Get the groups a particular namespace (user) is associated with.
+namespaceGroupsSTM :: Handle -> Namespace -> STM (Set GroupId)
+namespaceGroupsSTM Handle { hUserGroups = STM.Map.listT -> hUserGroups } ns =
+  ListT.fold collectGroupsBelonging mempty hUserGroups
+ where
+  collectGroupsBelonging acc (gid, users) =
+    pure $ if ns `elem` users then acc `Set.union` (Set.singleton gid) else acc
 
 --------------------------------------------------------------------------------
 newCounter = newTVar (Counter 1)
@@ -178,6 +201,29 @@ addSession' ss s = sort (nub (s : ss))
 
 --------------------------------------------------------------------------------
 newUsers = newTVar Examples.users
+
+newUserGroupsSTM :: STM (STM.Map GroupId (Set Namespace))
+newUserGroupsSTM = do
+  m <- STM.Map.new
+  mapM_ (uncurry $ addUsersToGroupSTM m) userGroupsL
+  pure m
+  where userGroupsL = Map.toList Examples.userGroups
+
+addUsersToGroupSTM
+  :: STM.Map GroupId (Set Namespace) -> GroupId -> Set Namespace -> STM ()
+addUsersToGroupSTM m gid users = do
+  mExistingUsers <- STM.Map.lookup gid m
+  let newUsers' = maybe users (Set.union users) mExistingUsers
+  STM.Map.insert newUsers' gid m
+
+addUsersToGroupIO
+  :: MonadIO m
+  => STM.Map GroupId (Set Namespace)
+  -> GroupId
+  -> Set Namespace
+  -> m ()
+addUsersToGroupIO m gid = liftIO . atomically . addUsersToGroupSTM m gid
+
   -- TODO Each Profile should be in its own TVar.
 
 getUsers h = readTVar (hUsers h)
@@ -188,7 +234,7 @@ login h credentials = do
   case authenticateProfile credentials profiles of
     Just Profile {..} -> do
       addSession h namespace
-      let user = User namespace email profGroups profTagRels
+      let user = User namespace email profTagRels
       return (Just user)
     Nothing -> return Nothing
 

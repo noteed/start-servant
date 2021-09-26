@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE
     TypeOperators
   , DataKinds
@@ -14,12 +13,9 @@ module Prototype.Server.New.Auth
   , PostAuthHeaders
   ) where
 
-import           Control.Lens
-import qualified Prototype.ACL                 as ACL
 import           Prototype.Types
 import           Servant.API
 import qualified Servant.Auth.Server           as SAuth
-import           Servant.Server.Experimental.Auth
 
 -- brittany-disable-next-binding
 -- | Simple user authentication.

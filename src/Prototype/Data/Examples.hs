@@ -3,10 +3,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Prototype.Data.Examples
   ( users
+  , userGroups
+  , groupBackendEng
   , allTodoLists
   , todoListPermissions
   ) where
 
+import qualified Data.Map                      as Map
+import qualified Data.Set                      as Set
 import           Prototype.ACL
 import           Prototype.Types
 import           Prototype.Types.Secret
@@ -30,9 +34,12 @@ users = [("secret", profAlice)]
 profAlice = Profile nsAlice
                     "alice@example.com"
                     "Alice"
-                    [groupBackendEng]
                     [(TagOwn, [tagEng]), (TagRead, [tagAccounting])]
 
+
+-- ** Users and their groups
+
+userGroups = Map.fromList [(groupBackendEng, Set.singleton nsAlice)]
 
 -- * Tags
 

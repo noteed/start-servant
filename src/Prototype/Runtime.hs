@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -190,6 +191,15 @@ appMHandlerNatTrans rt appM =
     -- re-wrap as servant `Handler`
       Handler $ runtimeErrToServantErr unwrapReaderT
 
+-- * Identifying groups of grantees.
+
+instance ACL.GroupedGrantee StmAppM Ptypes.User where
+  granteeGroups u =
+    withStorage (`Db.namespaceGroupsIO` (u ^. Ptypes.uUsername))
+
+instance ACL.GroupedGrantee StmAppM Ptypes.Profile where
+  granteeGroups p = withStorage (`Db.namespaceGroupsIO` Ptypes.namespace p)
+
 -- * DBStorage instances. 
 
 -- | Given we're operating in an Stm based environment, how do we carry out user operations?
@@ -197,9 +207,14 @@ instance S.DBStorage StmAppM Ptypes.User where
 
   -- All of these are stubs that should be implemented.
   dbUpdate up = withStorage $ case up of
-    CreateNewUser  u     -> undefined
-    DeactivateUser uid   -> undefined
-    AddToGroups uid gids -> undefined
+    CreateNewUser  u                 -> undefined
+    DeactivateUser uid               -> undefined
+    AddToGroups uid (toList -> gids) -> addToGroups
+     where
+      addToGroups Db.Handle {..} = mapM addToGroup gids
+       where
+        addToGroup gid =
+          uid <$ Db.addUsersToGroupIO hUserGroups gid (Set.singleton uid)
 
   dbSelect sel = withStorage $ case sel of
     AuthUser creds -> liftIO . fmap toList . atomically . (`Db.login` creds)

@@ -25,7 +25,6 @@ module Prototype.Types
   , uUsername
   , uEmail
   , uUserTagRels
-  , uUserGroups
   , Session(..)
 
   -- * User operations
@@ -156,7 +155,6 @@ data Profile = Profile
   { namespace   :: Namespace
   , email       :: Text
   , name        :: Text
-  , profGroups  :: Set GroupId
   , profTagRels :: TagRels
   }
   deriving (Show, Generic)
@@ -177,9 +175,6 @@ instance S.DBStorageOps Profile where
 -- TODO: A user is a grantee, and a user may belong to groups.
 instance Grantee Profile where
   granteeTags = profTagRels
-
-instance GroupedGrantee Profile where
-  granteeGroups = profGroups
 
 htmlProfile Profile {..} = H.div $ do
   H.div $ do
@@ -209,7 +204,6 @@ newtype Session = Session { username :: Namespace }
 data User = User
   { username    :: Namespace -- ^ User's unique namespace/id
   , email       :: Text -- ^ TODO: newtype
-  , userGroups  :: Set GroupId -- ^ Set of groups the user belongs to
   , userTagRels :: TagRels -- ^ Users direct tag relationships (eg. tags owned, read, written)
   }
   deriving (Eq, Show, Generic)
@@ -217,7 +211,6 @@ data User = User
 
 makeLensesFor [ ("username", "uUsername")
               , ("email", "uEmail")
-              , ("userGroups", "uUserGroups")
               , ("userTagRels", "uUserTagRels")
               ] ''User
 
@@ -237,9 +230,6 @@ instance S.DBStorageOps User where
 -- TODO: A user is a grantee, and a user may belong to groups.
 instance Grantee User where
   granteeTags = userTagRels
-
-instance GroupedGrantee User where
-  granteeGroups = userGroups
 
 -- The data we need to authenticate a user (then create a cookie with a User in
 -- it).

@@ -58,6 +58,7 @@ newtype GroupId = GroupId { _unGroupId :: NE.NonEmptyText }
                          , Ord
                          , ToJSON
                          , FromJSON
+                         , Hashable
                          , ToHttpApiData
                          , FromHttpApiData
                          , H.ToMarkup
