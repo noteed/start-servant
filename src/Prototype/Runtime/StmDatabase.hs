@@ -37,6 +37,8 @@ module Prototype.Runtime.StmDatabase
   , addItemIO
   , deleteItemSTM
   , deleteItemIO
+  -- * General functions, generating new IDs.
+  , newIdIO
   ) where
 
 import qualified Control.Concurrent.STM        as STM
@@ -59,6 +61,7 @@ import           Prototype.Types.Secret
 import qualified StmContainers.Map             as STM
                                                 ( Map )
 import qualified StmContainers.Map             as STM.Map
+import           System.Random                  ( randomIO )
 
 import qualified Prototype.Data.Examples       as Examples
 import           Prototype.Types
@@ -420,3 +423,8 @@ deleteItemIO
   -> STM.Map TodoListId TodoList
   -> m (Maybe StmStorageErr)
 deleteItemIO lid iid = liftIO . atomically . deleteItemSTM lid iid
+
+-- | Generate an ID with a prefix.
+newIdIO :: MonadIO m => Text -> m Text
+newIdIO prefix =
+  liftIO $ mappend (prefix <> "-") . show . abs <$> randomIO @Int

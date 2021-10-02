@@ -32,17 +32,25 @@ type Todos =
        -- Get a single todo-list 
   :<|> Capture "todoListId" TodoListId :> ( Get '[B.HTML] (Page 'Authd TodoListModes)
                                        :<|> "item" :> Capture "todoItemId" TodoItemId :> (MarkItem :<|> DelItem)
+                                       :<|> "item" :> CreateItem
                                           )
+
+
+type RWListPage = Page 'Authd (ACL.ResourceAuth 'ACL.TagWrite UP.TodoListRW)
 
 -- brittany-disable-next-binding 
 -- | Item mark EP (FIXME: method should be changed to PUT) 
 type MarkItem =  "mark" :> QueryParam' '[Required] "newState" TodoState
-                        :> Get '[B.HTML] (Page 'Authd (ACL.ResourceAuth 'ACL.TagWrite UP.TodoListRW))
+                        :> Get '[B.HTML] RWListPage
 
 -- brittany-disable-next-binding 
 -- | Item delete EP (FIXME: method should be changed to DELETE) 
 type DelItem
-  = "delete" :> Get '[B.HTML] (Page 'Authd (ACL.ResourceAuth 'ACL.TagWrite UP.TodoListRW))
+  = "delete" :> Get '[B.HTML] RWListPage
+
+-- | Create item EP 
+type CreateItem
+  = "create" :> ReqBody '[FormUrlEncoded] TodoItemCreate :> Post '[B.HTML] RWListPage
 
 type TodosC m
   = ( Applicative m
@@ -59,7 +67,7 @@ todosT authdUser = userTodos :<|> specificTodo
     let summaries = UP.TodoListSummary <$> lists
     pure . AuthdPage authdUser . UP.UserTodos $ summaries
 
-  specificTodo id = viewTodo :<|> specificItem
+  specificTodo id = viewTodo :<|> specificItem :<|> createItem
    where
     viewTodo = getTargetTodo >>= authorizeGetTodo
     specificItem itemId = markItem :<|> delItem
@@ -70,6 +78,8 @@ todosT authdUser = userTodos :<|> specificTodo
 
       delItem =
         withRW $ S.gettingAffectedFirstErr TodoListById (DeleteItem id itemId)
+
+    createItem = withRW . S.gettingAffectedFirstErr TodoListById . AddItem id
 
     withRW update = do
         -- Authorize the user to be able to actually RW on this Todo list.

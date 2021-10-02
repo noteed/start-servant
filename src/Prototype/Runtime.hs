@@ -57,6 +57,7 @@ import           Prototype.Runtime.Errors
 import qualified Prototype.Runtime.StmDatabase as Db
 import qualified Prototype.Runtime.Storage     as S
 import           Prototype.Types               as Ptypes
+import           Prototype.Types.NonEmptyText   ( nonEmptyText )
 import qualified Servant.Auth.Server           as Srv
 import           Servant.Server                 ( Handler(..) )
 
@@ -231,8 +232,16 @@ instance S.DBStorage StmAppM Ptypes.TodoList where
       Db.markItemIO lid iid state'
         .   Db.hTodoLists
         >=> maybe (pure [lid]) throwError'
-    AddItem lid item ->
-      Db.addItemIO lid item . Db.hTodoLists >=> maybe (pure [lid]) throwError'
+    AddItem lid itemCreate -> \db -> do
+      newId <- generateId
+      let item = itemCreate & tiId .~ newId
+      Db.addItemIO lid item (Db.hTodoLists db)
+        >>= maybe (pure [lid]) throwError'
+     where
+      generateId =
+        Db.newIdIO "item" >>= maybe err (pure . TodoItemId) . nonEmptyText
+      err = throwError' . IdGenFailed $ "ID generated was empty!"
+
     DeleteItem lid iid ->
       Db.deleteItemIO lid iid . Db.hTodoLists >=> maybe (pure [lid]) throwError'
 

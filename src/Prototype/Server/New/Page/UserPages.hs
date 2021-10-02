@@ -51,9 +51,25 @@ newtype RWView resource = RWView resource
 type TodoListRW = RWView Types.TodoList
 
 instance H.ToMarkup TodoListRW where
-  toMarkup (RWView tl) = todoListInvariantMarkup tl $ Shared.titledList
+  toMarkup (RWView tl) = todoListInvariantMarkup tl $ do
     H.hr
-    (RWView . (tl ^. Types.tlId, ) <$> Types._tlItems tl)
+    H.h6 "Add an item to this list"
+    addItemForm $ tl ^. Types.tlId
+    Shared.titledList H.hr (RWView . (tl ^. Types.tlId, ) <$> Types._tlItems tl)
+
+-- | Generate an add TodoItem form
+addItemForm tlId = H.form (inputs >> submit) ! A.formaction link' ! A.method
+  "POST"
+ where
+  inputs = do
+    H.input ! A.name "_tiDescription" ! A.type_ "text"
+    H.input
+      ! A.name "_tiState"
+      ! A.value (H.textValue $ show Types.Todo)
+      ! A.type_ "text"
+  submit =
+    H.button "Add" ! A.type_ "submit" ! A.formaction link' ! A.formmethod "POST"
+  link' = H.textValue $ T.intercalate "/" [userTodoPath tlId, "item", "create"]
 
 instance H.ToMarkup (RWView (Types.TodoListId, Types.TodoItem)) where
   toMarkup (RWView (tlId, Types.TodoItem {..})) = do
@@ -69,51 +85,43 @@ instance H.ToMarkup (RWView (Types.TodoListId, Types.TodoItem)) where
         , mkChangeState Types.Done Types.InProgress
         ]
     mkChangeState from' to' =
-      let btnText = show from' <> " -> " <> show to'
-          link'   = H.textValue $ T.intercalate
-            "/"
-            [ "/private/user/todos"
-            , tlId ^. coerced
-            , "item"
-            , _tiId ^. Lens.to Types._unTodoItemId . unNonEmptyText
-            , "mark"
-            ]
-          button' =
-            H.button (H.text btnText)
-              ! A.type_ "submit"
-              ! A.formaction link'
-              ! A.method "PUT"
-          input' =
-            H.input
-              ! A.name "newState"
-              ! A.value (H.textValue $ show to')
-              ! A.type_ "hidden"
-      in 
+      let
+        btnText = show from' <> " -> " <> show to'
+        link' =
+          H.textValue $ T.intercalate "/" [userTodoItemPath tlId _tiId, "mark"]
+        button' =
+          H.button (H.text btnText)
+            ! A.type_ "submit"
+            ! A.formaction link'
+            ! A.method "PUT"
+        input' =
+          H.input
+            ! A.name "newState"
+            ! A.value (H.textValue $ show to')
+            ! A.type_ "hidden"
+      in
         -- FIXME: The form methods seem to get ignored, so while we're setting the method here, it has no affect.
-          H.form (input' >> button') ! A.formaction link' ! A.method "PUT"
+        H.form (input' >> button') ! A.formaction link' ! A.method "PUT"
 
     mkDelete =
-      let btnText = "Delete"
-          link'   = H.textValue $ T.intercalate
-            "/"
-            [ "/private/user/todos"
-            , tlId ^. coerced
-            , "item"
-            , _tiId ^. Lens.to Types._unTodoItemId . unNonEmptyText
-            , "delete"
-            ]
-          button' =
-            H.button (H.text btnText)
-              ! A.type_ "submit"
-              ! A.action link'
-              ! A.method "DELETE"
-      in 
+      let
+        btnText = "Delete"
+        link'   = H.textValue
+          $ T.intercalate "/" [userTodoItemPath tlId _tiId, "delete"]
+        button' =
+          H.button (H.text btnText)
+            ! A.type_ "submit"
+            ! A.action link'
+            ! A.method "DELETE"
+      in
         -- FIXME: The form methods seem to get ignored, so while we're setting the method here, it has no affect.
-          H.form button' ! A.action link' ! A.method "DELETE"
+        H.form button' ! A.action link' ! A.method "DELETE"
+
+userTodoPath tlId = T.intercalate "/" ["/private/user/todos", tlId ^. coerced]
+userTodoItemPath tlId tiId =
+  T.intercalate "/" [userTodoPath tlId, "item", tiId ^. coerced]
 
 newtype ROView resource = ROView resource
-
-
 type TodoListRO = ROView Types.TodoList
 
 instance H.ToMarkup TodoListRO where

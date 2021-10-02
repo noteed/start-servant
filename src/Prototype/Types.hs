@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -19,7 +20,9 @@ module Prototype.Types
   , tlItems
   , tlTags
   , TodoItemId(..)
-  , TodoItem(..)
+  , TodoItem'(..)
+  , TodoItem
+  , TodoItemCreate
   , tiId
   , tiDescription
   , tiState
@@ -62,7 +65,9 @@ import           Servant.Auth.Server            ( FromJWT
                                                 )
 import           Text.Blaze                     ( ToMarkup(toMarkup) )
 import qualified Text.Blaze.Html5              as H
-import           Web.FormUrlEncoded             ( FromForm )
+import           Web.FormUrlEncoded             ( FromForm(..)
+                                                , parseUnique
+                                                )
 
 --------------------------------------------------------------------------------
 newtype Counter = Counter Int
@@ -108,7 +113,7 @@ instance S.DBStorageOps TodoList where
   data DBUpdate TodoList =
     -- | Mark an item in a todo-list.
     MarkItem TodoListId TodoItemId TodoState
-    | AddItem TodoListId TodoItem
+    | AddItem TodoListId TodoItemCreate
     | DeleteItem TodoListId TodoItemId
   
   data DBSelect TodoList =
@@ -132,14 +137,20 @@ newtype TodoItemId = TodoItemId { _unTodoItemId :: NonEmptyText }
                             , FromJSON
                             ) via NonEmptyText
 
-data TodoItem = TodoItem
-  { _tiId          :: TodoItemId
+data TodoItem' id = TodoItem
+  { _tiId          :: id
   , _tiDescription :: Text
   , _tiState       :: TodoState
   }
   deriving (Show, Eq, Ord, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
+type TodoItem = TodoItem' TodoItemId
+type TodoItemCreate = TodoItem' ()
+
+instance FromForm TodoItemCreate where
+  fromForm f =
+    TodoItem () <$> parseUnique "_tiDescription" f <*> parseUnique "_tiState" f
 
 data TodoState = Todo | InProgress | Done
   deriving (Show, Eq, Ord, Read, Generic)
@@ -151,21 +162,29 @@ instance FromHttpApiData TodoState where
 data TodoListErr = NoSuchTodoList TodoListId
                  | NoSuchItem TodoListId TodoItemId
                  | ItemIdCollission TodoListId TodoItemId
+                 | IdGenFailed Text
                  deriving Show
 
 instance IsRuntimeErr TodoListErr where
   httpStatus = \case
-    NoSuchTodoList{} -> notFound404
-    NoSuchItem{}     -> notFound404
+    NoSuchTodoList{}   -> notFound404
+    NoSuchItem{}       -> notFound404
+    ItemIdCollission{} -> conflict409
+    IdGenFailed{}      -> internalServerError500
 
   userMessage = Just . \case
     NoSuchTodoList id -> "No todo-list with id = " <> show id
     NoSuchItem lid iid ->
       "No todo-list-item with id = " <> show iid <> " in list = " <> show lid
+    ItemIdCollission lid itemId ->
+      "Item ID " <> show itemId <> " already exists in list " <> show lid
+    IdGenFailed msg -> msg
 
   errCode = errCode' . \case
-    NoSuchTodoList{} -> "LIST_NOT_FOUND"
-    NoSuchItem{}     -> "ITEM_NOT_FOUND"
+    NoSuchTodoList{}   -> "LIST_NOT_FOUND"
+    NoSuchItem{}       -> "ITEM_NOT_FOUND"
+    ItemIdCollission{} -> "ITEM_ID_COLLISSION"
+    IdGenFailed{}      -> "ITEM_ID_GENERATION_FAILED"
     where errCode' = mappend "ERR.TODO_LIST"
 
 
@@ -302,5 +321,5 @@ instance IsRuntimeErr UserErr where
     where addMsg = sentence . mappend "Unable to authenticate: "
 
 makeLenses ''TodoList
-makeLenses ''TodoItem
+makeLenses ''TodoItem'
 
