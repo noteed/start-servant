@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies #-}
 {- |
 Module: Prototype.Runtime.Storage
@@ -19,8 +20,15 @@ module Prototype.Runtime.Storage
   ( DBIdentity(..)
   , DBStorage(..)
   , DBStorageOps(..)
+  -- * Performing updates and getting values. 
+  , gettingAffected
+  , gettingAffectedFirstMaybe
+  , gettingAffectedFirstErr
   ) where
 
+import qualified Data.Text                     as T
+import qualified Data.Typeable                 as Typeable
+import qualified Network.HTTP.Types.Status     as Status
 import           Prototype.Runtime.Errors      as Errs
 
 -- | A class with the properties indicating that something has some notion of a unique ID in a storage layer.
@@ -48,3 +56,61 @@ class ( DBIdentity a
 
   -- | Execute a select, returning the rows that were matched by the query.
   dbSelect :: DBSelect a -> m [a]
+
+-- | Perform a DBUpdate and get all the affected entities. 
+gettingAffected
+  :: forall a m
+   . DBStorage m a
+  => (DBId a -> DBSelect a)
+  -> DBUpdate a
+  -> m [a]
+gettingAffected mkSelect = dbUpdate >=> concatMapM (dbSelect . mkSelect)
+
+-- | Perform a DBUpdate and get the first of the affected entities. 
+gettingAffectedFirstMaybe
+  :: forall a m
+   . DBStorage m a
+  => (DBId a -> DBSelect a)
+  -> DBUpdate a
+  -> m (Maybe a)
+gettingAffectedFirstMaybe mkSelect =
+  gettingAffected mkSelect >=> pure . headMay
+
+-- | Perform a DBUpdate and get the first of the affected entities: but throw errors when no resources can be retrieved. 
+gettingAffectedFirstErr
+  :: forall a m
+   . (DBStorage m a, MonadError Errs.RuntimeErr m, Typeable a)
+  => (DBId a -> DBSelect a)
+  -> DBUpdate a
+  -> m a
+gettingAffectedFirstErr mkSelect =
+  gettingAffectedFirstMaybe mkSelect >=> maybe resourceNotFound pure
+ where
+  resourceNotFound =
+    Errs.throwError'
+      . ResourceNotFound (typeRep $ Proxy @a)
+      $ "No values retrieved after update."
+
+data StorageErr = ResourceNotFound TypeRep Text
+  deriving Show
+
+instance Errs.IsRuntimeErr StorageErr where
+  errCode = errCode' . \case
+    ResourceNotFound tyRep _ -> prefix <> "NOT_FOUND"
+     where
+      prefix =
+        ( Errs.ErrCode
+        . pure
+        . T.toUpper
+        . T.pack
+        . Typeable.tyConName
+        . Typeable.typeRepTyCon
+        $ tyRep
+        )
+    where errCode' = mappend "ERR.STORAGE"
+
+  httpStatus = \case
+    ResourceNotFound{} -> Status.notFound404
+
+  userMessage = Just . \case
+    ResourceNotFound _ msg -> msg

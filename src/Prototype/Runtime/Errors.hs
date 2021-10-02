@@ -30,12 +30,13 @@ instance IsRuntimeErr AuthErr where
 module Prototype.Runtime.Errors
   ( RuntimeErr(..)
   , IsRuntimeErr(..)
+  , ErrCode(..)
   , asServantError
   ) where
 
 import           Control.Lens                  as L
 import qualified Data.ByteString.Lazy          as BSL
-import qualified Data.String     -- Required from the handrolled IsString instance. 
+import qualified Data.String      -- Required from the handrolled IsString instance. 
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as TE
 import           Network.HTTP.Types
