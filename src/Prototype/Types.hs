@@ -47,14 +47,15 @@ import           Control.Lens
 import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
                                                 )
+import qualified Data.Text                     as T
 import           Network.HTTP.Types
 import           Prototype.ACL
 import           Prototype.Runtime.Errors       ( IsRuntimeErr(..) )
 import qualified Prototype.Runtime.Storage     as S
 import           Prototype.Types.NonEmptyText
 import           Prototype.Types.Secret
-import           Servant.API                    ( FromHttpApiData
-                                                , ToHttpApiData
+import           Servant.API                    ( FromHttpApiData(..)
+                                                , ToHttpApiData(..)
                                                 )
 import           Servant.Auth.Server            ( FromJWT
                                                 , ToJWT
@@ -114,6 +115,7 @@ instance S.DBStorageOps TodoList where
     -- | Get the list by a user.
     TodoListsByNamespace Namespace
     | AllTodoLists
+    | TodoListById TodoListId
 
 newtype TodoItemId = TodoItemId { _unTodoItemId :: NonEmptyText }
                    deriving ( Eq
@@ -142,6 +144,9 @@ data TodoItem = TodoItem
 data TodoState = Todo | InProgress | Done
   deriving (Show, Eq, Ord, Read, Generic)
   deriving anyclass (ToJSON, FromJSON)
+
+instance FromHttpApiData TodoState where
+  parseUrlPiece = first T.pack . readEither . T.unpack
 
 data TodoListErr = NoSuchTodoList TodoListId
                  | NoSuchItem TodoListId TodoItemId

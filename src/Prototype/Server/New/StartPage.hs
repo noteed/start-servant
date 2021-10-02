@@ -133,7 +133,7 @@ protectedT authFailed =
     :<|> dispErr
     :<|> dispErr
     :<|> (    const
-         $    dispErr {- move to Todo module -}:<|> const dispErr
+         $    dispErr {- move to Todo module -}:<|> const (const dispErr)
          )
 
  where

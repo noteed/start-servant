@@ -257,6 +257,10 @@ instance S.DBStorage StmAppM Ptypes.TodoList where
         pure userTls
       notFound = throwError' $ Ptypes.NoSuchUser userNamespace
 
+    -- Naive solution here, but we're not bothered too much for performance in the STM case.
+    TodoListById lid ->
+      S.dbSelect AllTodoLists <&> toList . find ((== lid) . S.dbId)
+
 -- | Storage operations for profiles.
 instance S.DBStorage StmAppM Ptypes.Profile where
   dbSelect = \case
