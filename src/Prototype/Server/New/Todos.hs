@@ -31,12 +31,18 @@ type Todos =
        Get '[B.HTML] (Page 'Authd UP.UserTodos)
        -- Get a single todo-list 
   :<|> Capture "todoListId" TodoListId :> ( Get '[B.HTML] (Page 'Authd TodoListModes)
-                                       :<|> "item" :> Capture "todoItemId" TodoItemId
-                                                   :> "mark"
-                                                   :> QueryParam' '[Required] "newState" TodoState
-                                                   :> Get '[B.HTML] (Page 'Authd (ACL.ResourceAuth 'ACL.TagWrite UP.TodoListRW))
+                                       :<|> "item" :> Capture "todoItemId" TodoItemId :> (MarkItem :<|> DelItem)
                                           )
 
+-- brittany-disable-next-binding 
+-- | Item mark EP (FIXME: method should be changed to PUT) 
+type MarkItem =  "mark" :> QueryParam' '[Required] "newState" TodoState
+                        :> Get '[B.HTML] (Page 'Authd (ACL.ResourceAuth 'ACL.TagWrite UP.TodoListRW))
+
+-- brittany-disable-next-binding 
+-- | Item delete EP (FIXME: method should be changed to DELETE) 
+type DelItem
+  = "delete" :> Get '[B.HTML] (Page 'Authd (ACL.ResourceAuth 'ACL.TagWrite UP.TodoListRW))
 
 type TodosC m
   = ( Applicative m
@@ -53,21 +59,24 @@ todosT authdUser = userTodos :<|> specificTodo
     let summaries = UP.TodoListSummary <$> lists
     pure . AuthdPage authdUser . UP.UserTodos $ summaries
 
-  specificTodo id = viewTodo :<|> markItem
+  specificTodo id = viewTodo :<|> specificItem
    where
     viewTodo = getTargetTodo >>= authorizeGetTodo
+    specificItem itemId = markItem :<|> delItem
+     where
+      markItem itemState = withRW $ S.gettingAffectedFirstErr
+        TodoListById
+        (MarkItem id itemId itemState)
 
-    markItem itemId itemState = do
-      -- Authorize the user to be able to actually RW on this Todo list.
+      delItem =
+        withRW $ S.gettingAffectedFirstErr TodoListById (DeleteItem id itemId)
+
+    withRW update = do
+        -- Authorize the user to be able to actually RW on this Todo list.
       authRW =<< getTargetTodo
-      -- Get the list after the update has been carried out 
-      affList <- S.gettingAffectedFirstErr TodoListById
-        $ MarkItem id itemId itemState
-
-      debug "Item marked!"
-
-      -- Form an authd. page with this updated list. 
+      affList <- update
       AuthdPage authdUser . fmap UP.RWView <$> authRW affList
+
 
     -- Helper function: authorizes a user's access level for a TODO and gets it in the appropriate mode (RW or RO)
     authorizeGetTodo tl =

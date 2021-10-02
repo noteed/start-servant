@@ -59,14 +59,16 @@ instance H.ToMarkup (RWView (Types.TodoListId, Types.TodoItem)) where
   toMarkup (RWView (tlId, Types.TodoItem {..})) = do
     H.toMarkup _tiDescription
     H.br
-    button ! A.style "font-weight: lighter; display: block;"
+    buttons ! A.style "font-weight: lighter; display: block;"
    where
-    button = H.span $ Shared.spaceElemsWith H.br $ case _tiState of
-      Types.Todo       -> [mkButton Types.Todo Types.Done]
-      Types.InProgress -> [mkButton Types.InProgress Types.Done]
+    buttons = H.span $ Shared.spaceElemsWith H.br $ mkDelete : case _tiState of
+      Types.Todo       -> [mkChangeState Types.Todo Types.Done]
+      Types.InProgress -> [mkChangeState Types.InProgress Types.Done]
       Types.Done ->
-        [mkButton Types.Done Types.Todo, mkButton Types.Done Types.InProgress]
-    mkButton from' to' =
+        [ mkChangeState Types.Done Types.Todo
+        , mkChangeState Types.Done Types.InProgress
+        ]
+    mkChangeState from' to' =
       let btnText = show from' <> " -> " <> show to'
           link'   = H.textValue $ T.intercalate
             "/"
@@ -89,6 +91,25 @@ instance H.ToMarkup (RWView (Types.TodoListId, Types.TodoItem)) where
       in 
         -- FIXME: The form methods seem to get ignored, so while we're setting the method here, it has no affect.
           H.form (input' >> button') ! A.formaction link' ! A.method "PUT"
+
+    mkDelete =
+      let btnText = "Delete"
+          link'   = H.textValue $ T.intercalate
+            "/"
+            [ "/private/user/todos"
+            , tlId ^. coerced
+            , "item"
+            , _tiId ^. Lens.to Types._unTodoItemId . unNonEmptyText
+            , "delete"
+            ]
+          button' =
+            H.button (H.text btnText)
+              ! A.type_ "submit"
+              ! A.action link'
+              ! A.method "DELETE"
+      in 
+        -- FIXME: The form methods seem to get ignored, so while we're setting the method here, it has no affect.
+          H.form button' ! A.action link' ! A.method "DELETE"
 
 newtype ROView resource = ROView resource
 
