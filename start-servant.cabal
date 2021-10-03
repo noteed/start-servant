@@ -110,6 +110,8 @@ library
       Prototype.Server.New.Page 
       Prototype.Server.New.Page.Shared 
       Prototype.Server.New.Page.UserPages 
+      Prototype.Server.New.Page.UserPages.Todos
+      Prototype.Server.New.Page.UserPages.Todos.Item
                   
       Prototype.Server.Legacy
       Prototype.Server.Legacy.Auth

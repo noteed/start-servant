@@ -57,4 +57,3 @@ titledList title (toList -> items) = title >> H.br >> H.ul
   (sequence_ (dispItem <$> items))
   where dispItem = H.li . H.toMarkup
 
-
