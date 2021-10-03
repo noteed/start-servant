@@ -31,12 +31,14 @@ type TodoListModes
 -- brittany-disable-next-binding 
 type Todos =
        Get '[B.HTML] (Page 'Authd UP.UserTodos)
+  :<|> "new-list" :> ( "form" :> Get '[B.HTML] (Page 'Authd UP.TodoListCreatePage)
+                     :<|> "create" :> ReqBody '[FormUrlEncoded] TodoListCreate :> Post '[B.HTML] RWListPage
+                     )
        -- Get a single todo-list 
-  :<|> Capture "todoListId" TodoListId :> ( Get '[B.HTML] (Page 'Authd TodoListModes)
-                                       :<|> "item" :> Capture "todoItemId" TodoItemId :> (MarkItem :<|> DelItem)
-                                       :<|> "item" :> (CreateItem :<|> EditItem)
-                                          )
-
+  :<|> "existing-list" :>  Capture "todoListId" TodoListId :> ( Get '[B.HTML] (Page 'Authd TodoListModes)
+                                                                :<|> "item" :> Capture "todoItemId" TodoItemId :> (MarkItem :<|> DelItem)
+                                                                :<|> "item" :> (CreateItem :<|> EditItem)
+                                                              )
 
 type RWListPage = Page 'Authd (ACL.ResourceAuth 'ACL.TagWrite UP.TodoListRW)
 
@@ -66,7 +68,7 @@ type TodosC m
     )
 
 todosT :: forall m . TodosC m => User -> ServerT Todos m
-todosT authdUser = userTodos :<|> specificTodo
+todosT authdUser = userTodos :<|> todoListCreation :<|> specificTodo
  where
   userTodos = do
     lists <- S.dbSelect $ TodoListsByNamespace (authdUser ^. uUsername)
@@ -110,6 +112,11 @@ todosT authdUser = userTodos :<|> specificTodo
         Just tl -> pure tl
         Nothing -> noList id
 
-    authRW = ACL.authorize @ 'ACL.TagWrite authdUser
+  todoListCreation = showForm :<|> createList
+   where
+    showForm   = pure $ AuthdPage authdUser UP.TodoListCreatePage
+    createList = undefined
+
+  authRW = ACL.authorize @ 'ACL.TagWrite authdUser
 
   noList = Rt.throwError' . NoSuchTodoList

@@ -7,6 +7,9 @@ module Prototype.Server.New.Page.UserPages.Todos.Item
   -- ** Specific to Todos
     TodoListRW
   , TodoListRO
+  -- * Generating paths
+  , userTodoPath
+  , userTodoItemPath
   ) where
 
 import           Control.Lens                  as Lens
@@ -110,7 +113,10 @@ instance VM.ToMarkupInMode 'VM.RW (Types.TodoListId, Types.TodoItem) where
         -- FIXME: The form methods seem to get ignored, so while we're setting the method here, it has no affect.
         H.form button' ! A.action link' ! A.method "DELETE"
 
-userTodoPath tlId = T.intercalate "/" ["/private/user/todos", tlId ^. coerced]
+userTodoPath :: Types.TodoListId -> Text
+userTodoPath tlId =
+  T.intercalate "/" ["/private/user/todos/existing-list", tlId ^. coerced]
+
 userTodoItemPath tlId tiId =
   T.intercalate "/" [userTodoPath tlId, "item", tiId ^. coerced]
 

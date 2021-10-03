@@ -14,7 +14,9 @@
 module Prototype.Types
   ( Counter(..)
   , TodoListId(..)
-  , TodoList(..)
+  , TodoList'(..)
+  , TodoList
+  , TodoListCreate
   , tlId
   , tlName
   , tlItems
@@ -50,6 +52,7 @@ import           Control.Lens
 import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
                                                 )
+import qualified Data.Set                      as Set
 import qualified Data.Text                     as T
 import           Network.HTTP.Types
 import           Prototype.ACL
@@ -87,8 +90,8 @@ newtype TodoListId = TodoListId { _unTodoListId :: NonEmptyText }
                             , FromJSON
                             ) via NonEmptyText
 
-data TodoList = TodoList
-  { _tlId    :: TodoListId
+data TodoList' id = TodoList
+  { _tlId    :: id
   , _tlName  :: Text
   , _tlItems :: [TodoItem]
   , _tlTags  :: Set Tag
@@ -96,6 +99,7 @@ data TodoList = TodoList
   deriving (Show, Eq, Ord, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
+type TodoList = TodoList' TodoListId
 instance H.ToMarkup TodoList where
   toMarkup TodoList {..} = do
     H.toMarkup _tlName
@@ -116,12 +120,30 @@ instance S.DBStorageOps TodoList where
     | AddItem TodoListId TodoItemCreate
     | DeleteItem TodoListId TodoItemId
     | EditItem TodoListId TodoItem
+    | NewList TodoListCreate
   
   data DBSelect TodoList =
     -- | Get the list by a user.
     TodoListsByNamespace Namespace
     | AllTodoLists
     | TodoListById TodoListId
+
+type TodoListCreate = TodoList' ()
+
+{- | Creating TodoLists 
+
+Limitations:
+
+1. No items can be specified 
+
+2. At most one tag can be specified.
+-}
+instance FromForm TodoListCreate where
+  fromForm f = do
+    _tlName <- parseUnique "_tlName" f
+    _tlTags <- Set.singleton <$> parseUnique "_tlTags" f
+    pure $ TodoList { _tlId = (), _tlItems = mempty, .. }
+
 
 newtype TodoItemId = TodoItemId { _unTodoItemId :: NonEmptyText }
                    deriving ( Eq
@@ -329,6 +351,6 @@ instance IsRuntimeErr UserErr where
     NoSuchUser       ns  -> "User not found by id: " <> show ns
     where addMsg = sentence . mappend "Unable to authenticate: "
 
-makeLenses ''TodoList
+makeLenses ''TodoList'
 makeLenses ''TodoItem'
 

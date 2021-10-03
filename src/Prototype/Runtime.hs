@@ -248,6 +248,8 @@ instance S.DBStorage StmAppM Ptypes.TodoList where
     EditItem lid item ->
       Db.editItemIO lid item . Db.hTodoLists >=> maybe (pure [lid]) throwError'
 
+    NewList listCreate -> undefined
+
   dbSelect = \case
     AllTodoLists ->
       withStorage
