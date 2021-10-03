@@ -30,7 +30,7 @@ inputField name type' req =
 pageHeading = H.docTypeHtml
 
 -- | Space out an elem with a trailing pipe. 
-spaceElem = (`spaceElemWith` (H.text " | "))
+spaceElem = (`spaceElemWith` H.text " | ")
 
 -- | Space out an elem with a trailing pipe. 
 spaceElemWith separator l = l >> separator
