@@ -115,6 +115,7 @@ instance S.DBStorageOps TodoList where
     MarkItem TodoListId TodoItemId TodoState
     | AddItem TodoListId TodoItemCreate
     | DeleteItem TodoListId TodoItemId
+    | EditItem TodoListId TodoItem
   
   data DBSelect TodoList =
     -- | Get the list by a user.
@@ -147,6 +148,14 @@ data TodoItem' id = TodoItem
 
 type TodoItem = TodoItem' TodoItemId
 type TodoItemCreate = TodoItem' ()
+
+instance FromForm TodoItem where
+  fromForm f =
+    TodoItem
+      <$> parseUnique "_tiId"          f
+      <*> parseUnique "_tiDescription" f
+      <*> parseUnique "_tiState"       f
+
 
 instance FromForm TodoItemCreate where
   fromForm f =

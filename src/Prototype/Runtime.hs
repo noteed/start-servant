@@ -245,6 +245,9 @@ instance S.DBStorage StmAppM Ptypes.TodoList where
     DeleteItem lid iid ->
       Db.deleteItemIO lid iid . Db.hTodoLists >=> maybe (pure [lid]) throwError'
 
+    EditItem lid item ->
+      Db.editItemIO lid item . Db.hTodoLists >=> maybe (pure [lid]) throwError'
+
   dbSelect = \case
     AllTodoLists ->
       withStorage

@@ -32,7 +32,7 @@ type Todos =
        -- Get a single todo-list 
   :<|> Capture "todoListId" TodoListId :> ( Get '[B.HTML] (Page 'Authd TodoListModes)
                                        :<|> "item" :> Capture "todoItemId" TodoItemId :> (MarkItem :<|> DelItem)
-                                       :<|> "item" :> CreateItem
+                                       :<|> "item" :> (CreateItem :<|> EditItem)
                                           )
 
 
@@ -52,6 +52,10 @@ type DelItem
 type CreateItem
   = "create" :> ReqBody '[FormUrlEncoded] TodoItemCreate :> Post '[B.HTML] RWListPage
 
+-- | Create item EP 
+type EditItem
+  = "edit" :> ReqBody '[FormUrlEncoded] TodoItem :> Post '[B.HTML] RWListPage
+
 type TodosC m
   = ( Applicative m
     , MonadError Rt.RuntimeErr m
@@ -67,7 +71,7 @@ todosT authdUser = userTodos :<|> specificTodo
     let summaries = UP.TodoListSummary <$> lists
     pure . AuthdPage authdUser . UP.UserTodos $ summaries
 
-  specificTodo id = viewTodo :<|> specificItem :<|> createItem
+  specificTodo id = viewTodo :<|> specificItem :<|> (createItem :<|> editItem)
    where
     viewTodo = getTargetTodo >>= authorizeGetTodo
     specificItem itemId = markItem :<|> delItem
@@ -80,6 +84,7 @@ todosT authdUser = userTodos :<|> specificTodo
         withRW $ S.gettingAffectedFirstErr TodoListById (DeleteItem id itemId)
 
     createItem = withRW . S.gettingAffectedFirstErr TodoListById . AddItem id
+    editItem   = withRW . S.gettingAffectedFirstErr TodoListById . EditItem id
 
     withRW update = do
         -- Authorize the user to be able to actually RW on this Todo list.

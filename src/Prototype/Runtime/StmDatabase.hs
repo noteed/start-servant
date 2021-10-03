@@ -37,6 +37,8 @@ module Prototype.Runtime.StmDatabase
   , addItemIO
   , deleteItemSTM
   , deleteItemIO
+  , editItemSTM
+  , editItemIO
   -- * General functions, generating new IDs.
   , newIdIO
   ) where
@@ -423,6 +425,31 @@ deleteItemIO
   -> STM.Map TodoListId TodoList
   -> m (Maybe StmStorageErr)
 deleteItemIO lid iid = liftIO . atomically . deleteItemSTM lid iid
+
+editItemSTM
+  :: TodoListId
+  -> TodoItem
+  -> STM.Map TodoListId TodoList
+  -> STM (Maybe StmStorageErr)
+editItemSTM lid newItem lists = withTodoListSTM lid lists editItem
+ where
+  editItem oldList =
+    let updatedList = oldList & tlItems %~ replaceNew
+    in  STM.Map.insert updatedList lid lists $> Nothing
+  replaceNew items =
+    [ item
+    | oldItem <- items
+    , let item = if oldItem ^. tiId == itemId then newItem else oldItem
+    ]
+  itemId = newItem ^. tiId
+
+editItemIO
+  :: MonadIO m
+  => TodoListId
+  -> TodoItem
+  -> STM.Map TodoListId TodoList
+  -> m (Maybe StmStorageErr)
+editItemIO lid newItem = liftIO . atomically . editItemSTM lid newItem
 
 -- | Generate an ID with a prefix.
 newIdIO :: MonadIO m => Text -> m Text

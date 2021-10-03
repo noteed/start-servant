@@ -15,6 +15,7 @@ module Prototype.Server.New.Page.UserPages
 
 import           Control.Lens                  as Lens
 import qualified Data.Text                     as T
+import qualified Network.HTTP.Types            as HTTP
 import qualified Prototype.ACL                 as ACL
 import qualified Prototype.Server.New.Page.Shared
                                                as Shared
@@ -54,12 +55,14 @@ instance H.ToMarkup TodoListRW where
   toMarkup (RWView tl) = todoListInvariantMarkup tl $ do
     H.hr
     H.h6 "Add an item to this list"
-    addItemForm $ tl ^. Types.tlId
+    itemForm (tl ^. Types.tlId) Nothing "create" HTTP.POST
     Shared.titledList H.hr (RWView . (tl ^. Types.tlId, ) <$> Types._tlItems tl)
 
 -- | Generate an add TodoItem form
-addItemForm tlId = H.form (inputs >> submit) ! A.formaction link' ! A.method
-  "POST"
+itemForm
+  :: Types.TodoListId -> Maybe Text -> Text -> HTTP.StdMethod -> H.Markup
+itemForm tlId itemId pathEnd formMethodStd =
+  H.form (inputs >> submit) ! A.action link' ! A.method formMethod
  where
   inputs = do
     H.input ! A.name "_tiDescription" ! A.type_ "text"
@@ -67,9 +70,16 @@ addItemForm tlId = H.form (inputs >> submit) ! A.formaction link' ! A.method
       ! A.name "_tiState"
       ! A.value (H.textValue $ show Types.Todo)
       ! A.type_ "text"
+    when (isJust itemId) H.input
+      ! A.name "_tiId"
+      ! A.value (H.textValue $ fromMaybe "" itemId)
+      ! A.type_ "hidden"
   submit =
-    H.button "Add" ! A.type_ "submit" ! A.formaction link' ! A.formmethod "POST"
-  link' = H.textValue $ T.intercalate "/" [userTodoPath tlId, "item", "create"]
+    H.button (H.toMarkup $ T.toTitle pathEnd)
+      ! A.type_ "submit"
+      ! A.formaction link'
+  link' = H.textValue $ T.intercalate "/" [userTodoPath tlId, "item", pathEnd]
+  formMethod = H.textValue . decodeUtf8 . HTTP.renderStdMethod $ formMethodStd
 
 instance H.ToMarkup (RWView (Types.TodoListId, Types.TodoItem)) where
   toMarkup (RWView (tlId, Types.TodoItem {..})) = do
@@ -77,13 +87,19 @@ instance H.ToMarkup (RWView (Types.TodoListId, Types.TodoItem)) where
     H.br
     buttons ! A.style "font-weight: lighter; display: block;"
    where
-    buttons = H.span $ Shared.spaceElemsWith H.br $ mkDelete : case _tiState of
-      Types.Todo       -> [mkChangeState Types.Todo Types.Done]
-      Types.InProgress -> [mkChangeState Types.InProgress Types.Done]
-      Types.Done ->
-        [ mkChangeState Types.Done Types.Todo
-        , mkChangeState Types.Done Types.InProgress
-        ]
+    buttons =
+      H.span
+        $ Shared.spaceElemsWith H.br
+        $ editItem
+        : mkDelete
+        : case _tiState of
+            Types.Todo       -> [mkChangeState Types.Todo Types.Done]
+            Types.InProgress -> [mkChangeState Types.InProgress Types.Done]
+            Types.Done ->
+              [ mkChangeState Types.Done Types.Todo
+              , mkChangeState Types.Done Types.InProgress
+              ]
+    editItem = itemForm tlId (Just $ _tiId ^. coerced) "edit" HTTP.POST
     mkChangeState from' to' =
       let
         btnText = show from' <> " -> " <> show to'
