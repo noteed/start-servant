@@ -1,10 +1,11 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-} -- done as a temporary measure, should be removed in the future.
+                                      -- Orphan instances are a nuisance, and a giant flaw/drawback in the typeclass design. 
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Prototype.Server.New.Page.UserPages.Todos.Item
-  ( -- * Views specific to permissions
-    RWView(..)
-  , ROView(..)
+  (
   -- ** Specific to Todos
-  , TodoListRW
+    TodoListRW
   , TodoListRO
   ) where
 
@@ -13,21 +14,25 @@ import qualified Data.Text                     as T
 import qualified Network.HTTP.Types            as HTTP
 import qualified Prototype.Server.New.Page.Shared
                                                as Shared
+import qualified Prototype.Server.New.Page.Shared.ViewMode
+                                               as VM
 import qualified Prototype.Types               as Types
 import           Prototype.Types.NonEmptyText
 import qualified Text.Blaze.Html5              as H
 import           Text.Blaze.Html5               ( (!) )
 import qualified Text.Blaze.Html5.Attributes   as A
 
-newtype RWView resource = RWView resource
-type TodoListRW = RWView Types.TodoList
+type TodoListRW = VM.View 'VM.RW Types.TodoList
 
-instance H.ToMarkup TodoListRW where
-  toMarkup (RWView tl) = todoListInvariantMarkup tl $ do
+-- Orphan, but we need to live with this until we have a properly divided Types module.
+instance VM.ToMarkupInMode 'VM.RW Types.TodoList where
+  toMarkupInMode tl = todoListInvariantMarkup tl $ do
     H.hr
     H.h6 "Add an item to this list"
     itemForm (tl ^. Types.tlId) Nothing "create" HTTP.POST
-    Shared.titledList H.hr (RWView . (tl ^. Types.tlId, ) <$> Types._tlItems tl)
+    Shared.titledList
+      H.hr
+      (VM.toMarkupInMode @ 'VM.RW . (tl ^. Types.tlId, ) <$> Types._tlItems tl)
 
 -- | Generate an add TodoItem form
 itemForm
@@ -52,8 +57,9 @@ itemForm tlId itemId pathEnd formMethodStd =
   link' = H.textValue $ T.intercalate "/" [userTodoPath tlId, "item", pathEnd]
   formMethod = H.textValue . decodeUtf8 . HTTP.renderStdMethod $ formMethodStd
 
-instance H.ToMarkup (RWView (Types.TodoListId, Types.TodoItem)) where
-  toMarkup (RWView (tlId, Types.TodoItem {..})) = do
+-- Orphan, but we need to live with this until we have a properly divided Types module.
+instance VM.ToMarkupInMode 'VM.RW (Types.TodoListId, Types.TodoItem) where
+  toMarkupInMode (tlId, Types.TodoItem {..}) = do
     H.toMarkup _tiDescription
     H.br
     buttons ! A.style "font-weight: lighter; display: block;"
@@ -108,15 +114,15 @@ userTodoPath tlId = T.intercalate "/" ["/private/user/todos", tlId ^. coerced]
 userTodoItemPath tlId tiId =
   T.intercalate "/" [userTodoPath tlId, "item", tiId ^. coerced]
 
-newtype ROView resource = ROView resource
-type TodoListRO = ROView Types.TodoList
+type TodoListRO = VM.View 'VM.RO Types.TodoList
 
-instance H.ToMarkup TodoListRO where
-  toMarkup (ROView tl) = todoListInvariantMarkup tl
-    $ Shared.titledList H.hr (ROView <$> Types._tlItems tl)
+instance VM.ToMarkupInMode 'VM.RO Types.TodoList where
+  toMarkupInMode tl = todoListInvariantMarkup tl $ Shared.titledList
+    H.hr
+    (VM.toMarkupInMode @ 'VM.RO <$> Types._tlItems tl)
 
-instance H.ToMarkup (ROView Types.TodoItem) where
-  toMarkup (ROView Types.TodoItem {..}) = H.toMarkup _tiDescription >> roMsg
+instance VM.ToMarkupInMode 'VM.RO Types.TodoItem where
+  toMarkupInMode Types.TodoItem {..} = H.toMarkup _tiDescription >> roMsg
    where
     roMsg = (H.span " (Item in Read-only mode)") ! A.style
       "font-weight: lighter; display: block; background-color: bisque;"

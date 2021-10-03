@@ -14,6 +14,8 @@ import qualified Prototype.ACL                 as ACL
 import qualified Prototype.Runtime.Errors      as Rt
 import qualified Prototype.Runtime.Storage     as S
 import           Prototype.Server.New.Page
+import qualified Prototype.Server.New.Page.Shared.ViewMode
+                                               as VM
 import qualified Prototype.Server.New.Page.UserPages
                                                as UP
 import           Prototype.Types
@@ -90,7 +92,7 @@ todosT authdUser = userTodos :<|> specificTodo
         -- Authorize the user to be able to actually RW on this Todo list.
       authRW =<< getTargetTodo
       affList <- update
-      AuthdPage authdUser . fmap UP.RWView <$> authRW affList
+      AuthdPage authdUser . fmap VM.RWView <$> authRW affList
 
 
     -- Helper function: authorizes a user's access level for a TODO and gets it in the appropriate mode (RW or RO)
@@ -99,7 +101,7 @@ todosT authdUser = userTodos :<|> specificTodo
           asRW = ACL.authorize @ 'ACL.TagWrite authdUser tl
       in  AuthdPage authdUser
             .   pageEither
-            .   bimap (fmap UP.RWView) (fmap UP.ROView)
+            .   bimap (fmap VM.RWView) (fmap VM.ROView)
             <$> (asRW `ACL.authorizeEither` asRO)
 
     getTargetTodo = do
