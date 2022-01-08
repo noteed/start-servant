@@ -27,6 +27,9 @@ instead of code):
   permissions.
 - Steps (queues): The operations that are possible depending on the current
   state of an object.
+- Valid states: The list of checks or constraints that the state of the system
+  must conform to. For each, examples of valid and invalid cases should be
+  provided.
 
 So it is a working implementation, in addition of the views, the prototype
 provides forms and/or API endpoints to run the available operations.
