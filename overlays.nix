@@ -3,13 +3,13 @@
 # 2. Provide this particular package with a fixed point of overlayed packages, if they become needed.
 let
 
-  sources = import ./sources.nix;
+  sources = import ./nix/sources.nix;
 
   # We can overlay haskell packages here.
   haskellOverlays =
     let
       # stm-containers is marked as broken in nixpkgs; so we're building it ourselves.
-      stm-containers-overlay = import ./stm-containers.nix;
+      stm-containers-overlay = import ./nix/stm-containers.nix;
     in
       with sources; [ stm-containers-overlay ];
 
