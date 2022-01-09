@@ -8,3 +8,4 @@
 /.direnv/
 /.envrc
 /dist-start-servant-run/
+/result
