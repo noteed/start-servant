@@ -2,13 +2,13 @@ self: super:
 let
 
   lib = super.lib;
-  sources = import ./nix/sources.nix;
+  sources = import ./sources.nix;
 
   inherit (import sources.gitignore { inherit lib; }) gitignoreSource;
 
   ourOverrides = selfh: superh: {
     start-servant =
-      selfh.callCabal2nix "start-servant" (gitignoreSource ./.) { };
+      selfh.callCabal2nix "start-servant" (gitignoreSource ../.) { };
   };
 
 in {
