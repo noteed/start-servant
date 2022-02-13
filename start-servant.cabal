@@ -5,6 +5,13 @@ category:           web
 extra-source-files:
     README.md
 
+-- A note on the Prelude mess:
+-- This is where the haskell tooling turns out to be lacking, mainly with how poor cabal is as a build tool.
+-- The default Prelude is trash, so we want to have a custom Prelude, however, when you do have a custom Prelude, it ends up interfering with pacakges that use this project as a dependency, in case they also need to have custom Preludes.
+-- This means that in the `library` we cannot add Prelude as an exposed-module; which would've made sense since we'd like to use it in the executable too.
+-- However, we cannot do that, so we end up doing a copy paste. Other workarounds for this are tedious. Using Mixins in the dependant packages has other drawbacks.
+-- In short. cabal really lets us down here, and we resort to an ugly approach. 
+
 common common-extensions
   default-language: Haskell2010
   default-extensions:
@@ -86,6 +93,7 @@ common common-dependencies
     -- Default instances for configuration etc.
    , data-default-class
    , template-haskell
+
 library
   import: common-dependencies, lang-settings, common-extensions
   hs-source-dirs: src
@@ -94,9 +102,6 @@ library
       servant-auth
     , random 
   exposed-modules:
-
-      Prelude
-
       Prototype.Html
 
       -- New server modules. 
@@ -143,16 +148,19 @@ library
 
       -- Functions to get the current module, etc.
       Prototype.Module
-
+  other-modules:
+     Prelude
 
 executable start-servant
   import: common-dependencies, lang-settings, common-extensions
   main-is:          serve.hs
   build-depends:
-     -- our dependencies
+     -- our dependencies (the library)
      start-servant
      -- Parse cli arguments.
    , optparse-applicative
+   , random
   hs-source-dirs:   bin
   other-modules:
       Parse
+      Prelude
