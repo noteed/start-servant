@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
@@ -36,9 +38,10 @@ module Prototype.Runtime.Errors
 
 import           Control.Lens                  as L
 import qualified Data.ByteString.Lazy          as BSL
-import qualified Data.String      -- Required from the handrolled IsString instance. 
+import qualified Data.String          -- Required from the handrolled IsString instance. 
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as TE
+import qualified GHC.Show                      as Show
 import           Network.HTTP.Types
 import qualified Network.HTTP.Types            as HTTP
 import           Servant.Server                 ( ServerError(..) )
@@ -63,6 +66,8 @@ data RuntimeErr where
   KnownErr ::IsRuntimeErr e => e -> RuntimeErr
   -- | Capture all exceptions
   RuntimeException ::Exception e => e -> RuntimeErr
+
+deriving anyclass instance Exception RuntimeErr
 
 -- | TODO: add common properties of errors.
 class IsRuntimeErr e where
@@ -93,6 +98,9 @@ class IsRuntimeErr e where
   -- | Header information to supply for returning errors over HTTP.
   httpHeaders :: e -> [Header]
   httpHeaders e = [("x-err-code", errCode e ^. coerced . L.to showErrCode . L.to TE.encodeUtf8)]
+
+instance Show RuntimeErr where
+  show = T.unpack . displayErr
 
 instance IsRuntimeErr RuntimeErr where
 
