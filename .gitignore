@@ -5,3 +5,7 @@
 /src/.dir-locals.el
 /dist/
 /TAGS
+/.direnv/
+/.envrc
+/dist-start-servant-run/
+/result

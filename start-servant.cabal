@@ -5,11 +5,38 @@ category:           web
 extra-source-files:
     README.md
 
+-- A note on the Prelude mess:
+-- This is where the haskell tooling turns out to be lacking, mainly with how poor cabal is as a build tool.
+-- The default Prelude is trash, so we want to have a custom Prelude, however, when you do have a custom Prelude, it ends up interfering with pacakges that use this project as a dependency, in case they also need to have custom Preludes.
+-- This means that in the `library` we cannot add Prelude as an exposed-module; which would've made sense since we'd like to use it in the executable too.
+-- However, we cannot do that, so we end up doing a copy paste. Other workarounds for this are tedious. Using Mixins in the dependant packages has other drawbacks.
+-- In short. cabal really lets us down here, and we resort to an ugly approach. 
+
+common common-extensions
+  default-language: Haskell2010
+  default-extensions:
+    TupleSections 
+    StrictData
+    MultiParamTypeClasses
+    DerivingStrategies
+    DerivingVia
+    DeriveGeneric
+    RecordWildCards
+    TypeSynonymInstances
+    FlexibleInstances
+    FlexibleContexts
+    UndecidableInstances
+    LambdaCase
+    TypeApplications
+    ScopedTypeVariables
+    GADTs
+
 -- Common language settings
 common lang-settings
   default-language: Haskell2010
   ghc-options:
     -Wall
+    -Wmissing-export-lists
     -fno-warn-missing-signatures
     -fno-warn-unused-do-bind
 
@@ -18,8 +45,8 @@ common lang-settings
 -- So far, I've omitted most version bounds, they can be generated using `nix-shell --run 'cabal freeze'`
 common common-dependencies
   build-depends:
-      -- base (TODO: replace with base-noprelude and use Prelude from Protolude (as mixin))
-      base >=4.7 && <5
+      base-noprelude >=4.7 && <5
+    , protolude
 
     -- servant "core" (& server)
     , servant
@@ -37,42 +64,103 @@ common common-dependencies
 
     -- web
     , http-api-data
+    , http-types
 
     -- DB/storage
     , stm
-    , stm-containers 
-    , containers 
+    , stm-containers
+    , containers
+
+    -- Characters
+    , text
+    , bytestring 
+
+    -- TextShow instance for AppName (required for logging)
+    , text-show
 
     -- Control
+    , list-t
     , mtl
+    , lens
 
     -- Server
     , wai
     , warp
 
+    -- Logging
+    , monad-log
+
+    -- Default instances for configuration etc.
+   , data-default-class
+   , template-haskell
+
 library
-  import: common-dependencies, lang-settings
+  import: common-dependencies, lang-settings, common-extensions
   hs-source-dirs: src
   build-depends:
     -- Extra servant packages
       servant-auth
+    , random 
   exposed-modules:
-      Prototype.Database
       Prototype.Html
 
-      Prototype.Server
-      Prototype.Server.Auth
+      -- New server modules. 
+      Prototype.Server.New
+      -- User start page 
+      Prototype.Server.New.StartPage
+      -- User Todos pages. 
+      Prototype.Server.New.Todos
+
+      Prototype.Server.New.Auth
+
+      Prototype.Server.New.Page 
+      Prototype.Server.New.Page.Shared 
+      Prototype.Server.New.Page.Shared.ViewMode
+
+      Prototype.Server.New.Page.UserPages 
+      Prototype.Server.New.Page.UserPages.Todos
+      Prototype.Server.New.Page.UserPages.Todos.Item
+                  
+      Prototype.Server.Legacy
+      Prototype.Server.Legacy.Auth
 
       Prototype.Types
+      Prototype.Types.NonEmptyText
+      Prototype.Types.Secret
 
       Prototype.Data.Examples
       Prototype.Pages.Home
 
+      -- Permissions
+      Prototype.ACL
+      Prototype.ACL.Types
+
+      -- Grantees of permissions
+      Prototype.Grantee.Group
+
+      -- Runtime and execution
+      Prototype.Runtime
+      Prototype.Runtime.StmDatabase
+      Prototype.Runtime.Errors
+
+      -- Abstract storage
+      Prototype.Runtime.Storage
+
+      -- Functions to get the current module, etc.
+      Prototype.Module
+  other-modules:
+     Prelude
+
 executable start-servant
-  import: common-dependencies, lang-settings
+  import: common-dependencies, lang-settings, common-extensions
   main-is:          serve.hs
   build-depends:
-     -- our dependencies
+     -- our dependencies (the library)
      start-servant
+     -- Parse cli arguments.
+   , optparse-applicative
+   , random
   hs-source-dirs:   bin
   other-modules:
+      Parse
+      Prelude

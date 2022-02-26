@@ -2,7 +2,13 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Prototype.Server where
+module Prototype.Server.Legacy ( api
+                        , server
+                        , protected
+                        , Protected
+                        , Unprotected
+                        , API
+                        ) where
 
 import Control.Concurrent.STM (atomically)
 import Control.Monad.Trans (liftIO)
@@ -11,13 +17,13 @@ import Servant.Auth.Server
 import Servant.HTML.Blaze (HTML)
 import Text.Blaze.Html5 (Html)
 
-import qualified Prototype.Database as Database
+import qualified Prototype.Runtime.StmDatabase as Database
 import Prototype.Html
   ( databaseIndex, document, document', loginPage, namespaceIndex
   , profilePage, todoListIndex)
   -- And also for ToMarkup instances.
 import qualified Prototype.Pages.Home as Pages
-import Prototype.Server.Auth
+import Prototype.Server.Legacy.Auth
 import Prototype.Types
 
 
@@ -41,8 +47,8 @@ type Protected =
        Get '[HTML] Html
   :<|> "login" :> Get '[HTML] Html
   :<|> "settings" :> "profile" :> Get '[HTML] Html
-  :<|> "settings" :> "profile" :> "username" :> Get '[JSON] String
-  :<|> "settings" :> "profile" :> "email" :> Get '[JSON] String
+  :<|> "settings" :> "profile" :> "username" :> Get '[JSON] Namespace
+  :<|> "settings" :> "profile" :> "email" :> Get '[JSON] Text
 
   :<|> "a" :> "counter" :> Get '[JSON] Int
   :<|> "a" :> "bump" :> Verb 'POST 204 '[JSON] NoContent
@@ -55,8 +61,8 @@ type Protected =
 
   :<|> "database" :> Get '[HTML] Html
 
-  :<|> Capture "namespace" String :> Get '[HTML] Html
-  :<|> Capture "namespace" String :> Capture "list" String :> Get '[HTML] Html
+  :<|> Capture "namespace" Namespace :> Get '[HTML] Html
+  :<|> Capture "namespace" Namespace :> Capture "list" Text :> Get '[HTML] Html
 
 -- 'Protected' will be protected by 'auths', which we still have to specify.
 -- If we get an "Authenticated v", we can trust the information in v, since
@@ -70,11 +76,11 @@ protected database result =
     Servant.Auth.Server.Authenticated user -> do
       mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
       case mprofile of
-        Just profile -> do
+        Just profile ->
           return $ document (Just profile) "start-servant" $ Pages.homePage (Just profile)
         _ -> throwAll err404
-             -- ^ If the user is authenticated, a profile must exists, so
-             --  TODO we must log this case properly.
+             -- If the user is authenticated, a profile must exists, so
+             -- TODO we must log this case properly.
     _ ->
       return $ document Nothing "start-servant" $ Pages.homePage Nothing
   )
@@ -83,11 +89,11 @@ protected database result =
     Servant.Auth.Server.Authenticated user -> do
       mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
       case mprofile of
-        Just profile -> do
+        Just profile ->
           return $ document' "start-servant" $ loginPage (Just profile)
         _ -> throwAll err404
-             -- ^ If the user is authenticated, a profile must exists, so
-             --  TODO we must log this case properly.
+             -- If the user is authenticated, a profile must exists, so
+             -- TODO we must log this case properly.
     _ ->
       return $ document' "start-servant" $ loginPage Nothing
   )
@@ -100,8 +106,8 @@ protected database result =
           Just profile ->
             return $ document mprofile "start-servant" $ profilePage profile
           _ -> throwAll err404
-               -- ^ If the user is authenticated, a profile must exists, so
-               --  TODO we must log this case properly.
+               -- If the user is authenticated, a profile must exists, so
+               -- TODO we must log this case properly.
       )
       :<|> return (username (user :: User))
       :<|> return (email (user :: User))
@@ -112,8 +118,8 @@ protected database result =
         case mprofile of
           Just profile -> return profile
           _ -> throwAll err404
-               -- ^ If the user is authenticated, a profile must exists, so
-               --  TODO we must log this case properly.
+               -- If the user is authenticated, a profile must exists, so
+               -- TODO we must log this case properly.
       )
       :<|> getSessions database
       :<|> getProfiles database
@@ -122,26 +128,26 @@ protected database result =
         mprofile <- liftIO . atomically $ Database.getLoggedInProfile database user
         case mprofile of
           Just profile ->
-            return $ document (Just profile) "start-servant" $ databaseIndex
+            return $ document (Just profile) "start-servant" databaseIndex
           _ -> throwAll err404
       )
-      :<|> (\namespace -> do
+      :<|> (\namespace' -> do
         -- TODO ^ Validate the namespace, maybe create a custom Capture type ?
         mprofileAndLists <- liftIO . atomically $
-          Database.getProfileAndLists database namespace
+          Database.getProfileAndLists database namespace'
 
         case mprofileAndLists of
           Just (profile, lists) ->
             return $ document (Just profile) "start-servant" $ namespaceIndex profile lists
           Nothing -> throwAll err404)
-      :<|> (\namespace listname -> do
+      :<|> (\namespace' listname -> do
         -- TODO ^ Validate the namespace, maybe create a custom Capture type ?
         mprofileAndList <- liftIO . atomically $
-          Database.getProfileAndList database namespace listname
+          Database.getProfileAndList database namespace' listname
 
         case mprofileAndList of
-          Just (profile, list) ->
-            return $ document (Just profile) "start-servant" $ todoListIndex profile list
+          Just (profile, list') ->
+            return $ document (Just profile) "start-servant" $ todoListIndex profile list'
           Nothing -> throwAll err404)
     _ -> throwAll err401
 
@@ -154,21 +160,22 @@ bumpCounter database = do
   liftIO . atomically $ Database.apply database op
   return NoContent
 
-getSessions database = do
+getSessions database =
   liftIO . atomically $ Database.getSessions database
 
-getProfiles database = do
+getProfiles database =
   liftIO . atomically $ Database.getProfiles database
 
 getAllTodoLists database = do
-  liftIO . atomically $ Database.getAllTodoLists database
+  xs <- liftIO . atomically $ Database.getAllTodoLists database
+  return (map snd xs)
 
 
 --------------------------------------------------------------------------------
 type Unprotected =
        "login"
          :> ReqBody '[FormUrlEncoded] Credentials
-         :> Verb 'POST 303 '[JSON] (Headers '[ Header "Location" String
+         :> Verb 'POST 303 '[JSON] (Headers '[ Header "Location" Text
                                              , Header "Set-Cookie" SetCookie
                                              , Header "Set-Cookie" SetCookie]
                                             NoContent)
@@ -180,4 +187,4 @@ unprotected :: Database.Handle -> CookieSettings -> JWTSettings -> Server Unprot
 unprotected database cs jwts =
        login database cs jwts
   :<|> serveDirectoryFileServer "static/"
-       -- ^ This presents an index of available files within the directory.
+       -- This presents an index of available files within the directory.

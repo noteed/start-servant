@@ -1,49 +1,87 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-} -- For hard-coded key.
 
 module Main (main) where
 
+import qualified Prototype.Server.New as New 
+import Prototype.Module
+import qualified Prototype.Runtime.Errors as Errs
+import Control.Monad.Fail (MonadFail) -- needed for pattern matching on LHS inside do blocks.
+import qualified Data.Text as T
+import qualified Control.Monad.Log as L
+import qualified Parse
+import qualified Prototype.Runtime as Rt
 import Network.Wai.Handler.Warp (run)
 import Servant
-import Servant.Auth.Server
+import qualified Servant.Auth.Server as Srv
 
--- For hard-coded key.
-import Crypto.JOSE.JWK (fromKeyMaterial)
-import Crypto.JOSE.JWA.JWK (KeyMaterial(OctKeyMaterial), OctKeyParameters(..))
-import Crypto.JOSE.Types (Base64Octets(..))
-
-import qualified Prototype.Database as Database (newHandle)
-import Prototype.Server (api, server)
-
-
---------------------------------------------------------------------------------
-port :: Int
-port = 7249
-
+import qualified Options.Applicative as A
+import Prototype.Server.Legacy (api, server)
 
 --------------------------------------------------------------------------------
 main :: IO ()
 main = do
-  -- This could be taken form disk, or hard-coded here, to keep existing
-  -- sessions alive.
-  key <- generateKey
-  -- let key = fromKeyMaterial (OctKeyMaterial (OctKeyParameters (Base64Octets "aa")))
+  confInMode <- A.execParser Parse.parseFullConf
+  outputConfAndModule confInMode
+  -- TODO: Handle the error case
+  case confInMode of
+    Parse.ConfStmMode conf -> stmLifecycle conf
+    -- TODO add others.
+    _ -> putStrLn @Text "Only STM mode supported for now!" >> exitFailure
+  where
 
-  -- Disable XSRF Cookie (otherwise, this needs some logic instead of
-  -- simple cURL calls):
-  -- https://github.com/haskell-servant/servant-auth/issues/55#issuecomment-747046527
-  -- Using Secure with Same-Site=Strict would be good enough ?
-  let cookieSettings = defaultCookieSettings
-        { cookieIsSecure = NotSecure
-          -- ^ Use temporarily NotSecure for easier local testing with cURL.
-        , cookieXsrfSetting = Nothing
-        , cookieSameSite = SameSiteStrict
-        }
+    outputConfAndModule conf = do
+      -- Get the information about the current module using some top level "value" in the module.
+      let currentModule = moduleOf 'main
+      putStrLn @Text $ "Current module: " <> show currentModule
+      outputConf conf
 
-      jwtSettings = defaultJWTSettings key
+    outputConf = putStrLn . \case
+      Parse.ConfStmMode conf ->
+        T.unlines [ "STM-Mode:" , show conf ]
+      Parse.ConfPostgresMode conf ->
+        T.unlines [ "Postgres-Mode:" , show conf ]
 
-      settings = cookieSettings :. jwtSettings :. EmptyContext
+stmLifecycle :: (MonadIO m, MonadFail m) => Rt.Conf -> m ()
+stmLifecycle conf@Rt.Conf{ _cServerMode } = case _cServerMode of
+  Rt.New -> stmBootAndLifecycle stmNewLifecycle conf 
+  Rt.Legacy -> stmBootAndLifecycle stmLegacyLifecycle conf
 
-  database <- Database.newHandle
+stmBootAndLifecycle :: MonadIO m => (Rt.StmRuntime -> m ()) -> Rt.Conf -> m ()
+stmBootAndLifecycle lifecycle conf@Rt.Conf {..} = do
+  key <- liftIO Srv.generateKey
+  Rt.bootStm key conf >>= either reportErr lifecycle
+  where
+    reportErr = putStrLn @Text . mappend "Unable to boot: " . Errs.displayErr
 
-  run port $ serveWithContext api settings $
-    server database cookieSettings jwtSettings
+stmLegacyLifecycle :: (MonadIO m, MonadFail m) => Rt.StmRuntime -> m ()
+stmLegacyLifecycle runtime@Rt.Runtime{..} = do
+  L.runLogT' _rLogger $ do
+
+    let settings = _cCookieSettings :. _rJwtSettings :. EmptyContext
+    -- Run the server enclosed within a `try` so we can handle all exits, and gracefully shut down
+    -- storage, etc.
+    exitReason <- liftIO . try @SomeException . run _cServerPort $ serveWithContext api settings $
+      server _rStorage _cCookieSettings _rJwtSettings
+    logExit runtime exitReason
+  where
+    Rt.Conf {..} = _rConf
+
+stmNewLifecycle :: (MonadIO m, MonadFail m) => Rt.StmRuntime -> m ()
+stmNewLifecycle runtime@Rt.Runtime {..} = do
+  L.runLogT' _rLogger $ do
+    exitReason <- liftIO . try @SomeException . run _cServerPort $ New.mkApplication runtime (Rt.appMHandlerNatTrans runtime) 
+    logExit runtime exitReason  
+  where
+    Rt.Conf {..} = _rConf 
+
+-- Log and exit; in the future, we'd like to use the runtime to gracefully shut down storage.
+-- Eg. if we are writing our STM State to disk using a Read-Show to persist state between
+-- restarts. Or for DB connection pools, where we'd like to shutdown all connections,
+-- gracefully committing pending transactions etc.
+logExit rt exitStatus = wrapUpRuntime rt >> case exitStatus of
+  Left err -> error ("Exiting on error: "  <> show err)  >> liftIO exitFailure
+  Right{} -> info "Exiting without any issues" >> liftIO exitSuccess
+  where
+    wrapUpRuntime Rt.Runtime{..} = liftIO $ L.cleanUp _rLogger
