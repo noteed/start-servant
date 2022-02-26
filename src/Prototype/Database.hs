@@ -1,9 +1,12 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
 
 module Prototype.Database where
 
 import Data.List (nub, sort)
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Control.Concurrent.STM (atomically, newTVar, readTVar, writeTVar, STM, TVar)
 
 import qualified Prototype.Data.Examples as Examples
@@ -22,8 +25,10 @@ data Handle = Handle
     -- ^ Password, and User. Those are real users. We don't store the password
     -- in a specific data type to avoid manipulating it and risking sending it
     -- over the wire.
-  , hTodoLists :: TVar [(String, TodoList)]
-    -- ^ Associates namespaces to Todo lists.
+  , hTodoLists :: TVar (Map String [TVar TodoList])
+    -- ^ Associates namespaces to all their Todo lists. In other words, index
+    -- all Todo lists by their namespace. I guess we can provide additional
+    -- indices if we want to provide additional ways to lookup Todo lists.
   }
 
 
@@ -91,23 +96,29 @@ getProfileAndList h namespace listname = do
 
 
 --------------------------------------------------------------------------------
-newTodoLists = newTVar Examples.todoLists
+newTodoLists :: STM (TVar (Map String [TVar TodoList]))
+newTodoLists = do
+  let f (k, v) = mapM newTVar v >>= return . (k,)
+  todoLists <- mapM f Examples.todoLists
+  newTVar (Map.fromList todoLists)
 
+getAllTodoLists :: Handle -> STM [TodoList]
 getAllTodoLists h = do
   lists <- readTVar (hTodoLists h)
-  return (map snd lists)
+  let lists' = Map.toList lists
+  mapM readTVar $ concatMap snd lists'
 
+getTodoLists :: Handle -> String -> STM [TodoList]
 getTodoLists h namespace = do
   lists <- readTVar (hTodoLists h)
-  return ((map snd . filter f) lists)
-  where f = (namespace ==) . fst
+  maybe (return mempty) (mapM readTVar) $ Map.lookup namespace lists
 
+getTodoList :: Handle -> String -> String -> STM (Maybe TodoList)
 getTodoList h namespace listname = do
-  lists <- readTVar (hTodoLists h)
-  case filter f lists of
-    [(_, list)] -> return (Just list)
-    _ -> return Nothing
-  where f (name, list) = namespace == name && listname == tlName list
+  lists <- getTodoLists h namespace
+  pure $ case filter ((listname ==) . tlName) lists of
+    [list] -> Just list
+    _ -> Nothing
 
 
 --------------------------------------------------------------------------------
