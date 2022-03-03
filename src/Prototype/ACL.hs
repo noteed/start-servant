@@ -41,6 +41,8 @@ module Prototype.ACL
 
 import qualified Data.Map                      as Map
 import qualified Data.Set                      as Set
+import qualified Logging
+import           Protolude
 import           Prototype.ACL.Types           as ACLTypes
 import qualified Prototype.Runtime.Errors      as Errs
 
@@ -152,7 +154,7 @@ authorizeV grantee tagGrant resource =
 -- | Try multiple authorizations fallbacks.
 authorizeEither
   :: forall m res tgPref tgFallback
-   . (MonadError Errs.RuntimeErr m, MonadLog AppName m)
+   . (MonadError Errs.RuntimeErr m, Logging.MonadLog Logging.AppName m)
   => m (ResourceAuth tgPref res) -- ^ Preferred authorization
   -> m (ResourceAuth tgFallback res) -- ^ Fallback authorization
   -> m (Either (ResourceAuth tgPref res) (ResourceAuth tgFallback res))
@@ -160,4 +162,4 @@ authorizeEither preferred fallback =
   (Left <$> preferred) `catchError` logErrorFallback
  where
   logErrorFallback err = logErr >> (Right <$> fallback)
-    where logErr = error (Errs.displayErr err)
+    where logErr = Logging.error (Errs.displayErr err)

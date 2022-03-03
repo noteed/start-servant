@@ -54,7 +54,7 @@ import qualified Data.Set                      as Set
 import qualified ListT
 import           ListT                          ( toList )
 import qualified Network.HTTP.Types.Status     as Stat
-import           Prelude                 hiding ( Handle
+import           Protolude               hiding ( Handle
                                                 , toList
                                                 )
 import           Prototype.ACL                  ( GroupId )

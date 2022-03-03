@@ -11,6 +11,7 @@ module Prototype.Pages.Home
   , homePage
   ) where
 
+import           Protolude
 import           Text.Blaze.Html5               ( (!)
                                                 , Html
                                                 )

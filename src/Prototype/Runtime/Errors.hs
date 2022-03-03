@@ -38,12 +38,14 @@ module Prototype.Runtime.Errors
 
 import           Control.Lens                  as L
 import qualified Data.ByteString.Lazy          as BSL
-import qualified Data.String           -- Required from the handrolled IsString instance. 
+import qualified Data.String             -- Required from the handrolled IsString instance. 
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as TE
 import qualified GHC.Show                      as Show
+import           Logging
 import           Network.HTTP.Types
 import qualified Network.HTTP.Types            as HTTP
+import           Protolude
 import           Servant.Server                 ( ServerError(..) )
 
 newtype ErrCode = ErrCode [Text]

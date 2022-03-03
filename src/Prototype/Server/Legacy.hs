@@ -10,6 +10,7 @@ module Prototype.Server.Legacy ( api
                         , API
                         ) where
 
+import Protolude 
 import Control.Concurrent.STM (atomically)
 import Control.Monad.Trans (liftIO)
 import Servant

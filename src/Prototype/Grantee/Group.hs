@@ -9,6 +9,7 @@ module Prototype.Grantee.Group
   ) where
 
 import           Control.Lens
+import           Protolude
 import           Prototype.ACL
 import qualified Prototype.ACL.Types           as ACLT
 

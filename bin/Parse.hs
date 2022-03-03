@@ -6,8 +6,10 @@ module Parse
   , ConfInMode(..)
   ) where
 
+import           Protolude 
 import qualified Prototype.Runtime as Rt
 import qualified Options.Applicative as A
+import Data.Default.Class (Default(..))
 
 -- | Parse any configuration irrespective of the mode we're running in.
 -- TODO: proper parsers for _cCookieSettings, _cJwtSettings

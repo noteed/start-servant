@@ -18,6 +18,7 @@ module Prototype.Html
   ) where
 
 import           Control.Monad                  ( forM_ )
+import           Protolude
 import           Prototype.Types.NonEmptyText   ( nonEmptyToTextCoerce )
 import           Text.Blaze.Html5               ( (!)
                                                 , Html

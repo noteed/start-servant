@@ -54,7 +54,9 @@ import           Data.Aeson                     ( FromJSON
                                                 )
 import qualified Data.Set                      as Set
 import qualified Data.Text                     as T
+import qualified Logging
 import           Network.HTTP.Types
+import           Protolude
 import           Prototype.ACL
 import           Prototype.Runtime.Errors       ( IsRuntimeErr(..) )
 import qualified Prototype.Runtime.Storage     as S
@@ -349,7 +351,7 @@ instance IsRuntimeErr UserErr where
     AuthFailed       msg -> msg
     PermissionDenied msg -> msg
     NoSuchUser       ns  -> "User not found by id: " <> show ns
-    where addMsg = sentence . mappend "Unable to authenticate: "
+    where addMsg = Logging.sentence . mappend "Unable to authenticate: "
 
 makeLenses ''TodoList'
 makeLenses ''TodoItem'

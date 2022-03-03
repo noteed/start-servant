@@ -4,6 +4,8 @@
 
 module Main (main) where
 
+import Protolude 
+import qualified Logging 
 import qualified Prototype.Server.New as New 
 import Prototype.Module
 import qualified Prototype.Runtime.Errors as Errs
@@ -81,7 +83,7 @@ stmNewLifecycle runtime@Rt.Runtime {..} = do
 -- restarts. Or for DB connection pools, where we'd like to shutdown all connections,
 -- gracefully committing pending transactions etc.
 logExit rt exitStatus = wrapUpRuntime rt >> case exitStatus of
-  Left err -> error ("Exiting on error: "  <> show err)  >> liftIO exitFailure
-  Right{} -> info "Exiting without any issues" >> liftIO exitSuccess
+  Left err -> Logging.error ("Exiting on error: "  <> show err)  >> liftIO exitFailure
+  Right{} -> Logging.info "Exiting without any issues" >> liftIO exitSuccess
   where
     wrapUpRuntime Rt.Runtime{..} = liftIO $ L.cleanUp _rLogger

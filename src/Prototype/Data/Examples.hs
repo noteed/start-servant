@@ -11,6 +11,7 @@ module Prototype.Data.Examples
 
 import qualified Data.Map                      as Map
 import qualified Data.Set                      as Set
+import           Protolude
 import           Prototype.ACL
 import           Prototype.Types
 import           Prototype.Types.Secret

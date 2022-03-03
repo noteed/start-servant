@@ -13,6 +13,7 @@ module Prototype.Server.New.Auth
   , PostAuthHeaders
   ) where
 
+import           Protolude
 import           Prototype.Types
 import           Servant.API
 import qualified Servant.Auth.Server           as SAuth
