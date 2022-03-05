@@ -43,6 +43,7 @@ import           Data.Aeson
 import qualified Data.Set                      as Set
 import qualified Data.Text                     as T
 import qualified Network.HTTP.Types            as HTTP
+import           Protolude
 import qualified Prototype.Runtime.Errors      as Errs
 import qualified Prototype.Types.NonEmptyText  as NE
 import           Servant.API                    ( FromHttpApiData

@@ -10,6 +10,8 @@ module Prototype.Server.New.Todos
   ) where
 
 import           Control.Lens
+import qualified Logging
+import           Protolude
 import qualified Prototype.ACL                 as ACL
 import qualified Prototype.Runtime.Errors      as Rt
 import qualified Prototype.Runtime.Storage     as S
@@ -64,7 +66,7 @@ type TodosC m
   = ( Applicative m
     , MonadError Rt.RuntimeErr m
     , S.DBStorage m TodoList
-    , MonadLog AppName m
+    , Logging.MonadLog Logging.AppName m
     )
 
 todosT :: forall m . TodosC m => User -> ServerT Todos m

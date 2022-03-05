@@ -27,6 +27,8 @@ module Prototype.Server.New.StartPage
   ) where
 
 import           Control.Lens
+import qualified Logging
+import           Protolude
 import qualified Prototype.ACL                 as ACL
 import qualified Prototype.Runtime             as Rt
 import qualified Prototype.Runtime.Errors      as Rt
@@ -62,7 +64,7 @@ type Public = "public" :>
 -- $loginConstraints Constraints needed for logging users in
 type LoginC mode m
   = ( MonadReader (Rt.Runtime mode) m
-    , MonadLog Rt.AppName m
+    , Logging.MonadLog Logging.AppName m
     , MonadError Rt.RuntimeErr m
     , S.DBStorage m User
     , MonadIO m
@@ -89,7 +91,7 @@ publicT =
       case mApplyCookies of
         Nothing           -> unauthdErr
         Just applyCookies -> do
-          info "User logged in"
+          Logging.info "User logged in"
           pure . addHeader @"Location" "/private/welcome" $ applyCookies
             NoContent
 
@@ -110,7 +112,7 @@ type UserPages =
 type ProtectedC m
   = ( Applicative m
     , MonadError Rt.RuntimeErr m
-    , MonadLog AppName m
+    , Logging.MonadLog Logging.AppName m
     , S.DBStorage m TodoList
     , ACL.GroupedGrantee m User
     )

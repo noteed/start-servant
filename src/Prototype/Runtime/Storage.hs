@@ -29,6 +29,7 @@ module Prototype.Runtime.Storage
 import qualified Data.Text                     as T
 import qualified Data.Typeable                 as Typeable
 import qualified Network.HTTP.Types.Status     as Status
+import           Protolude
 import           Prototype.Runtime.Errors      as Errs
 
 -- | A class with the properties indicating that something has some notion of a unique ID in a storage layer.

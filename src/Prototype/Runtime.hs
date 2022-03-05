@@ -20,9 +20,9 @@ module Prototype.Runtime
   , cStaticFilesDir
   , AppMode(..)
   , ServerMode(..)
-  , AppName(..)
-  , showAppName
-  , unAppName
+  , Logging.AppName(..)
+  , Logging.showAppName
+  , Logging.unAppName
   , ModeStorage
   -- * Runtime
   , Runtime(..)
@@ -46,12 +46,14 @@ module Prototype.Runtime
 import qualified Control.Concurrent.STM        as STM
 import           Control.Lens            hiding ( Level )
 import qualified Crypto.JOSE.JWK               as JWK
+import           Data.Default.Class             ( Default(..) )
 import qualified Data.Map                      as Map
 import qualified Data.Set                      as Set
 import qualified Data.Text                     as T
 -- Needed for handwritten Show instance for Conf
 import qualified GHC.Show
-import           Prelude                 hiding ( Handle )
+import qualified Logging
+import           Protolude               hiding ( Handle )
 import qualified Prototype.ACL                 as ACL
 import           Prototype.Runtime.Errors
 import qualified Prototype.Runtime.StmDatabase as Db
@@ -76,8 +78,8 @@ instance Default ServerMode where
   def = Legacy
 
 data Conf = Conf
-  { _cAppName        :: AppName -- ^ Application name
-  , _cLogLevel       :: Level -- ^ The logging level
+  { _cAppName        :: Logging.AppName -- ^ Application name
+  , _cLogLevel       :: Logging.Level -- ^ The logging level
   , _cServerPort     :: Int -- ^ The port number to run the server on
   , _cCookieSettings :: Srv.CookieSettings -- ^ Cookie settings to use
   , _cMkJwtSettings  :: JWK.JWK -> Srv.JWTSettings -- ^ JWK settings to use.
@@ -91,7 +93,7 @@ instance Show Conf where
   show Conf {..} =
     T.unpack
       . T.intercalate "\n\t"
-      $ [ "\tappName = " <> showAppName _cAppName
+      $ [ "\tappName = " <> Logging.showAppName _cAppName
         , "logLevel = " <> show _cLogLevel
         , "serverPort = " <> show _cServerPort
         , "cookieSettings = " <> show _cCookieSettings
@@ -101,7 +103,7 @@ instance Show Conf where
 instance Default Conf where
   def = Conf
     { _cAppName        = "start-servant"
-    , _cLogLevel       = levelInfo
+    , _cLogLevel       = Logging.levelInfo
     , _cServerPort     = 7249
     -- Disable XSRF Cookie (otherwise, this needs some logic instead of
     -- simple cURL calls):
@@ -131,7 +133,7 @@ type family ModeStorage (mode :: AppMode) :: Type where
 data Runtime (mode :: AppMode) = Runtime
   { _rConf        :: Conf -- ^ Original configuration with which the application was started
   , _rStorage     :: ModeStorage mode -- ^ The actual storage
-  , _rLogger      :: Logger AppName -- ^ The Logger
+  , _rLogger      :: Logging.Logger Logging.AppName -- ^ The Logger
   , _rJwtSettings :: Srv.JWTSettings  -- ^ JWT settings to use
   }
 
@@ -156,7 +158,7 @@ newtype AppM (mode :: AppMode) a
 type StmAppM = AppM 'Stm
 type PostgresAppM = AppM 'Postgres
 
-instance MonadLog AppName (AppM mode) where
+instance Logging.MonadLog Logging.AppName (AppM mode) where
   askLogger = asks _rLogger
   localLogger f = local $ over rLogger f
 
@@ -165,15 +167,18 @@ bootStm :: MonadIO m => JWK.JWK -> Conf -> m (Either RuntimeErr StmRuntime)
 bootStm jwk _rConf@Conf {..} = do
   -- Start off by creating a logger first; we may want to log steps in the boot process.
   _rLogger <- createLogger
-  runLogT' _rLogger . bootEnv $ do
+  Logging.runLogT' _rLogger . bootEnv $ do
     -- Instantiate storage
-    infoE "Instantiating storage"
+    Logging.infoE "Instantiating storage"
     _rStorage <- liftIO Db.newHandle
-    info "Booted" $> Right Runtime { _rJwtSettings = _cMkJwtSettings jwk, .. }
+    Logging.info "Booted"
+      $> Right Runtime { _rJwtSettings = _cMkJwtSettings jwk, .. }
  where
-  bootEnv = localEnv (<> "Boot" <> "STM")
-  createLogger =
-    makeDefaultLogger simpleTimeFormat (LogStdout 1024) _cLogLevel _cAppName
+  bootEnv      = Logging.localEnv (<> "Boot" <> "STM")
+  createLogger = Logging.makeDefaultLogger Logging.simpleTimeFormat
+                                           (Logging.LogStdout 1024)
+                                           _cLogLevel
+                                           _cAppName
 
 -- | Get the storage handle, and give it to the function that does something with it.
 withStorage :: forall a mode . (ModeStorage mode -> AppM mode a) -> AppM mode a

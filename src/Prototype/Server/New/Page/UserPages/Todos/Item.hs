@@ -15,6 +15,7 @@ module Prototype.Server.New.Page.UserPages.Todos.Item
 import           Control.Lens                  as Lens
 import qualified Data.Text                     as T
 import qualified Network.HTTP.Types            as HTTP
+import           Protolude
 import qualified Prototype.Server.New.Page.Shared
                                                as Shared
 import qualified Prototype.Server.New.Page.Shared.ViewMode

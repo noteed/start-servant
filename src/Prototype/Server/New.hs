@@ -10,6 +10,7 @@ module Prototype.Server.New
   ) where
 
 import           Control.Lens            hiding ( Context )
+import           Protolude
 import qualified Prototype.Runtime             as Rt
 import qualified Prototype.Server.New.StartPage
                                                as SP

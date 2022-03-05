@@ -8,6 +8,7 @@ module Prototype.Server.Legacy.Auth
 
 import           Control.Concurrent.STM         ( atomically )
 import           Control.Monad.Trans            ( liftIO )
+import           Protolude
 import           Servant
 import           Servant.Auth.Server
 

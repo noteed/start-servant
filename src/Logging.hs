@@ -1,21 +1,19 @@
+{-# LANGUAGE PackageImports    #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE OverloadedStrings #-}
 {- |
-Module: Prelude
+Module: Logging 
 Description: Custom prelude for start-servant
 
 We import Protolude and re-export it, for the usual protolude niceties;
 and this module is meant to add more such re-exports as necessary as the project progresses.
 
 -}
-module Prelude
+module Logging
   (
     -- * Text handling
     sentence
   , ellipsis
-  -- * Re-exports
-  , module Proto
-  , module Def
   -- ** Logging 
   , L.runLogT'
   , L.runLogT
@@ -53,14 +51,18 @@ module Prelude
   , AppName(..)
   , unAppName
   , showAppName
+  -- * Logger
+  , AppNameLogger
   ) where
 
 import           Control.Lens
 import qualified Control.Monad.Log             as L
-import           Data.Default.Class            as Def
-import qualified Data.String     -- required for IsString instance.
+import qualified Data.String          -- required for IsString instance.
 import qualified Data.Text                     as T
-import           Protolude                     as Proto
+import "protolude" Protolude                  
+
+-- | A type alias for convenience
+type AppNameLogger = L.Logger AppName 
 
 -- | Terminate a sentence with a period; avoids clumsy mappends etc. for properly formatting sentences.
 sentence :: Text -> Text

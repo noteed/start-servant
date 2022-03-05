@@ -29,6 +29,7 @@ common common-extensions
     LambdaCase
     TypeApplications
     ScopedTypeVariables
+    NoImplicitPrelude
     GADTs
 
 -- Common language settings
@@ -148,8 +149,10 @@ library
 
       -- Functions to get the current module, etc.
       Prototype.Module
+
+      -- Helpers for logging
+      Logging 
   other-modules:
-     Prelude
 
 executable start-servant
   import: common-dependencies, lang-settings, common-extensions
@@ -163,4 +166,3 @@ executable start-servant
   hs-source-dirs:   bin
   other-modules:
       Parse
-      Prelude

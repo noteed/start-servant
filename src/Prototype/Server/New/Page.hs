@@ -18,6 +18,7 @@ module Prototype.Server.New.Page
   ) where
 
 import           Control.Lens
+import           Protolude
 import           Prototype.Server.New.Page.Shared
 import           Prototype.Types
 import qualified Text.Blaze                    as B

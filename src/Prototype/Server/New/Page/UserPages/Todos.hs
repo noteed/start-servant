@@ -9,6 +9,7 @@ module Prototype.Server.New.Page.UserPages.Todos
   ) where
 
 import qualified Data.Text                     as T
+import           Protolude
 import qualified Prototype.Server.New.Page.Shared
                                                as Shared
 import           Prototype.Server.New.Page.UserPages.Todos.Item
