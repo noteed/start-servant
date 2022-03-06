@@ -82,6 +82,7 @@ common common-dependencies
     -- Control
     , list-t
     , mtl
+    , exceptions 
     , lens
 
     -- Server
@@ -90,6 +91,10 @@ common common-dependencies
 
     -- Logging
     , monad-log
+    , fast-logger
+
+    -- Parsing options. 
+    , optparse-applicative
 
     -- Default instances for configuration etc.
    , data-default-class
@@ -152,6 +157,7 @@ library
 
       -- Helpers for logging
       Logging 
+      MultiLogging 
   other-modules:
 
 executable start-servant
@@ -161,7 +167,6 @@ executable start-servant
      -- our dependencies (the library)
      start-servant
      -- Parse cli arguments.
-   , optparse-applicative
    , random
   hs-source-dirs:   bin
   other-modules:
