@@ -1,6 +1,16 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
+{- |
+Module: MultiLogging
+Description: A generalisation of `MonadLog` and friends (From Control.Monad.Log) but with support for logging over multiple loggers. 
+
+Example use case: consider we want to
+1. Output logs to stdout
+2. Output logs to an HTTP based logging collector.
+
+This module provides abstractions for supporting multiple loggers that can achieve that. 
+-}
 module MultiLogging
   (
   -- * Logging configuration
@@ -8,7 +18,6 @@ module MultiLogging
   -- ** Configuration lenses. 
   , lcOutputs
   , lcRootAppName
-  , lcBufSize
   , lcLogLevel
   -- ** Parsing the configuration from the CLI.
   , parseLoggingConf
@@ -57,7 +66,6 @@ import qualified System.Log.FastLogger.File    as FL.File
 data LoggingConf = LoggingConf
   { _lcOutputs     :: [FL.LogType] -- ^ Multiple logging outputs: logging is disabled if this list is empty.
   , _lcRootAppName :: L.AppName  -- ^ Application name to use at the root of the logger. 
-  , _lcBufSize     :: FL.BufSize -- ^ Buffer size to observe for logging.
   , _lcLogLevel    :: L.Level -- ^ The min. logging level to output. Any logging under this level will be filtered out. 
   }
 
@@ -66,7 +74,6 @@ parseLoggingConf :: A.Parser LoggingConf
 parseLoggingConf = do
   _lcOutputs     <- A.many parseLogType
   _lcRootAppName <- L.parseAppName
-  _lcBufSize     <- bufSize
   _lcLogLevel    <- logLevel
   pure LoggingConf { .. }
 
