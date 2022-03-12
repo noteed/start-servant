@@ -58,12 +58,12 @@ module Logging
 
 import           Control.Lens
 import qualified Control.Monad.Log             as L
-import qualified Data.String                   as Str  -- required for IsString instance.
+import qualified Data.String                   as Str   -- required for IsString instance.
 import qualified Data.Text                     as T
 import qualified Options.Applicative           as A
 import "protolude" Protolude
 
--- | A type alias for convenience
+-- | A type alias for convenience: this is a `L.Logger` where the `env` type is an `AppName`. 
 type AppNameLogger = L.Logger AppName
 
 -- | Terminate a sentence with a period; avoids clumsy mappends etc. for properly formatting sentences.
