@@ -1,17 +1,20 @@
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Prototype.Server.New.Page.Shared
   ( inputField
-  , pageHeading
   , spaceElem
   , spaceElemWith
   , spaceElems
   , spaceElemsWith
+  , pageHeading
   -- * Lists 
   , titledList
   ) where
 
 import           Protolude
+import qualified "design-hs-lib" Smart.Html.Render
+                                               as Render
 import qualified Text.Blaze.Html5              as H
 import           Text.Blaze.Html5               ( (!) )
 import qualified Text.Blaze.Html5.Attributes   as A
@@ -28,7 +31,7 @@ inputField name type' req =
 
 -- TODO: Add some CSS stylesheets etc. here in the future. 
 -- | Add a common page heading: sets up the CSS imports, necessary encoding values etc. 
-pageHeading = H.docTypeHtml
+pageHeading html = H.docTypeHtml $ Render.smartDesignHead >> html
 
 -- | Space out an elem with a trailing pipe. 
 spaceElem = (`spaceElemWith` H.text " | ")
@@ -46,7 +49,6 @@ spaceElemsWith separator elems = case toList elems of
   []         -> mempty
   [h       ] -> h
   (h : rest) -> spaceElemWith separator h >> spaceElems rest
-
 
 titledList
   :: forall item f
