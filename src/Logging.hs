@@ -51,18 +51,20 @@ module Logging
   , AppName(..)
   , unAppName
   , showAppName
+  , parseAppName
   -- * Logger
   , AppNameLogger
   ) where
 
 import           Control.Lens
 import qualified Control.Monad.Log             as L
-import qualified Data.String          -- required for IsString instance.
+import qualified Data.String                   as Str   -- required for IsString instance.
 import qualified Data.Text                     as T
-import "protolude" Protolude                  
+import qualified Options.Applicative           as A
+import "protolude" Protolude
 
--- | A type alias for convenience
-type AppNameLogger = L.Logger AppName 
+-- | A type alias for convenience: this is a `L.Logger` where the `env` type is an `AppName`. 
+type AppNameLogger = L.Logger AppName
 
 -- | Terminate a sentence with a period; avoids clumsy mappends etc. for properly formatting sentences.
 sentence :: Text -> Text
@@ -134,4 +136,12 @@ makeLenses ''AppName
 -- | Take any string; split at @/@; and use it as the AppName.
 instance IsString AppName where
   fromString = AppName . T.splitOn "/" . T.pack
+
+-- | Parse the application name (`AppName`) wherein the sections are separated by @/@.
+-- Note the use of fromString which ensures we split out the incoming string properly.
+parseAppName :: A.Parser AppName
+parseAppName = Str.fromString <$> A.strOption
+  (A.long "logging-root-app-name" <> A.metavar "STRING" <> A.help
+    "Application name: sections separated by `/`"
+  )
 

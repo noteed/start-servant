@@ -11,7 +11,6 @@ module Prototype.Server.New.Page.Shared
   , titledList
   ) where
 
-import           Logging                        ( AppName )
 import           Protolude
 import qualified Text.Blaze.Html5              as H
 import           Text.Blaze.Html5               ( (!) )
