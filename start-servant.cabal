@@ -135,6 +135,8 @@ library
       Prototype.Types
       Prototype.Types.NonEmptyText
       Prototype.Types.Secret
+     
+      Prototype.Lib.Wrapped 
 
       Prototype.Data.Examples
       Prototype.Pages.Home
