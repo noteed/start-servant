@@ -51,6 +51,8 @@ module MultiLogging
 
   -- * Re-exports for convenience.
   , L.AppName(..)
+  , L.pShowStrict
+  , L.pShowLazy
   ) where
 
 import           Control.Lens
