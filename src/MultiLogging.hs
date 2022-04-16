@@ -26,6 +26,7 @@ module MultiLogging
   , AppNameLoggers(..)
   -- ** Lenses 
   , appNameLoggers
+  , localEnv
 
   -- * Instantiate loggers. 
   , makeDefaultLoggersWithConf
@@ -148,6 +149,17 @@ class MonadAppNameLogMulti m where
   askLoggers :: m AppNameLoggers
   -- | Locally modified loggers, useful for localised logging envs. 
   localLoggers :: (L.AppNameLogger -> L.AppNameLogger) -> m a -> m a
+
+-- | Local logging environment over multiple loggers. 
+localEnv
+  :: forall m a
+   . MonadAppNameLogMulti m
+  => (L.AppName -> L.AppName)
+  -> m a
+  -> m a
+localEnv modEnv = localLoggers modifyEnv
+ where
+  modifyEnv logger = logger { ML.environment = modEnv (ML.environment logger) }
 
 -- | A unified set of minimal constraints required for us to be able to log over multiple loggers. 
 type LoggingConstraints m = (MonadIO m, MonadMask m, MonadAppNameLogMulti m)
