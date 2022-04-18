@@ -198,4 +198,4 @@ runLogFuncMulti :: LoggingConstraints m => ML.LogT L.AppName m () -> m ()
 runLogFuncMulti logFunc = do
   AppNameLoggers loggers <- askLoggers
   mapM_ runLoggerOver loggers
-  where runLoggerOver logger = ML.runLogTSafe logger logFunc
+  where runLoggerOver logger = ML.runLogT' logger logFunc
