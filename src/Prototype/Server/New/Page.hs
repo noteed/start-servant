@@ -17,12 +17,10 @@ module Prototype.Server.New.Page
   , SignupPage(..)
   ) where
 
-import           Control.Lens
 import           Protolude
 import qualified Prototype.Server.New.Page.Navbar
                                                as Nav
 import           Prototype.Server.New.Page.Shared
-import           Prototype.Types
 import qualified Text.Blaze                    as B
 import qualified Text.Blaze.Html5              as H
 import           Text.Blaze.Html5               ( (!) )
@@ -76,7 +74,7 @@ instance B.ToMarkup (Page 'Public _noAuth page) where
 
 -- $commonPages Commonly used pages.
 
-data LoginPage = LoginPage H.AttributeValue
+newtype LoginPage = LoginPage H.AttributeValue
 
 instance B.ToMarkup LoginPage where
   toMarkup (LoginPage authPath) =

@@ -29,7 +29,6 @@ import qualified GHC.Show                      as Show
 import qualified GHC.TypeLits                  as TL
 import           Protolude
 import           Servant.API                    ( FromHttpApiData )
-import qualified Web.FormUrlEncoded            as Form
 
 -- | Exposure level of the secret.
 data SecretExp = ToJSONExp
