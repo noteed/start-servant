@@ -29,6 +29,7 @@ import qualified GHC.Show                      as Show
 import qualified GHC.TypeLits                  as TL
 import           Protolude
 import           Servant.API                    ( FromHttpApiData )
+import qualified Web.FormUrlEncoded            as Form
 
 -- | Exposure level of the secret.
 data SecretExp = ToJSONExp
@@ -103,3 +104,4 @@ infix 4 =:=
 
 -- | Type-alias for convenience. A password has no exposures, and is a wrapper over `Text
 type Password = Secret '[] Text
+

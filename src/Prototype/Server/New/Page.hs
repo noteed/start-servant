@@ -47,13 +47,15 @@ instance H.ToMarkup (PageEither pageL pageR) where
 data AuthStat = Authd | Public
 
 -- | The page: a page can be authenticated or not authenticated. We guarantee that with types. 
-data Page (authStat :: AuthStat) page where
+data Page (authStat :: AuthStat) user page where
   -- | A page where a user information is available: the user is the authenticated user. 
-  AuthdPage ::B.ToMarkup page => User -> page -> Page 'Authd page
-  -- | A public page; no user information is necessary: eg. a login page.  
-  PublicPage ::B.ToMarkup page => page -> Page 'Public page
+  AuthdPage ::B.ToMarkup page => user -> page -> Page 'Authd user page
+  -- | A public page; no user information is necessary or possible (hence we use `Void`): eg. a login page.  
+  -- While the `Page` datatype is polymorphic over user, a public page makes it impossible to provide a user
+  -- type, hence the use of `Void`. 
+  PublicPage ::B.ToMarkup page => page -> Page 'Public Void page
 
-instance B.ToMarkup (Page 'Authd page) where
+instance B.ToMarkup (Page 'Authd User page) where
   toMarkup (AuthdPage user page) = pageHeading . H.body $ do
     -- TODO: Render the user's information as a navbar; in the future we'd like to add groups etc. the user belongs to here.
     -- render some sort of a divider between the navbar and the rest of the page contents. 
@@ -73,7 +75,7 @@ instance B.ToMarkup (Page 'Authd page) where
       in
         allLinks >> H.hr >> H.br
 
-instance B.ToMarkup (Page 'Public page) where
+instance B.ToMarkup (Page 'Public user page) where
   toMarkup (PublicPage page) = pageHeading . H.body $ do
     -- TODO: proper navbar for unauthenticated pages.
     navbar
