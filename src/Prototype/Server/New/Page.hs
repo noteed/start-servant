@@ -19,6 +19,8 @@ module Prototype.Server.New.Page
 
 import           Control.Lens
 import           Protolude
+import qualified Prototype.Server.New.Page.Navbar
+                                               as Nav
 import           Prototype.Server.New.Page.Shared
 import           Prototype.Types
 import qualified Text.Blaze                    as B
@@ -55,27 +57,17 @@ data Page (authStat :: AuthStat) user page where
   -- type, hence the use of `Void`. 
   PublicPage ::B.ToMarkup page => page -> Page 'Public Void page
 
-instance B.ToMarkup (Page 'Authd User page) where
-  toMarkup (AuthdPage user page) = pageHeading . H.body $ do
+instance Nav.IsNavbarContent user => B.ToMarkup (Page 'Authd user page) where
+  toMarkup (AuthdPage user page) =
+    pageHeading
+      .  H.body
+      $
     -- TODO: Render the user's information as a navbar; in the future we'd like to add groups etc. the user belongs to here.
     -- render some sort of a divider between the navbar and the rest of the page contents. 
-    navbar
+         Nav.navbarMarkup user
+      >> B.toMarkup page
 
-    B.toMarkup page
-   where
-    navbar =
-      let
-        greeting     = B.toMarkup @Text $ "Hi! " <> (user ^. uEmail)
-        groupsLink   = H.a "Your groups" ! A.href "/private/user/groups"
-        todosLink    = H.a "Your todos" ! A.href "/private/user/todos"
-        settingsLink = H.a "Your settings" ! A.href "/private/user/settings"
-        logoutLink   = H.a "Logout" ! A.href "/private/user/logout"
-        allLinks =
-          spaceElems [greeting, groupsLink, todosLink, settingsLink, logoutLink]
-      in
-        allLinks >> H.hr >> H.br
-
-instance B.ToMarkup (Page 'Public user page) where
+instance B.ToMarkup (Page 'Public _noAuth page) where
   toMarkup (PublicPage page) = pageHeading . H.body $ do
     -- TODO: proper navbar for unauthenticated pages.
     navbar

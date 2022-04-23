@@ -123,6 +123,7 @@ library
       Prototype.Server.New.Auth
 
       Prototype.Server.New.Page 
+      Prototype.Server.New.Page.Navbar
       Prototype.Server.New.Page.Shared 
       Prototype.Server.New.Page.Shared.ViewMode
 
