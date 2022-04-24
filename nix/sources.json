@@ -5,6 +5,12 @@
         "rev": "434f9f8e49b847ef3e648672c5564b6dd0d3be67",
         "type": "git"
     },
+    "design-hs": {
+        "ref": "main",
+        "repo": "git@github.com:smartcoop/design-hs",
+        "rev": "dff5f27538247cedc7758acdff9b19b3c4452737",
+        "type": "git"
+    },
     "focus": {
         "ref": "master",
         "repo": "git@github.com:nikita-volkov/focus",

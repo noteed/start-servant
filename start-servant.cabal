@@ -62,6 +62,8 @@ common common-dependencies
     , servant-blaze
     , blaze-markup
     , blaze-html
+    -- smart specific design components 
+    , design-hs-lib
 
     -- web
     , http-api-data
