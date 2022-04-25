@@ -26,6 +26,7 @@ module MultiLogging
   , AppNameLoggers(..)
   -- ** Lenses 
   , appNameLoggers
+  , localEnv
 
   -- * Instantiate loggers. 
   , makeDefaultLoggersWithConf
@@ -51,6 +52,8 @@ module MultiLogging
 
   -- * Re-exports for convenience.
   , L.AppName(..)
+  , L.pShowStrict
+  , L.pShowLazy
   ) where
 
 import           Control.Lens
@@ -87,14 +90,20 @@ logLevel =
 parseLogType :: A.Parser FL.LogType
 parseLogType = off <|> logStdout <|> logStderr <|> fileNoRot <|> file
 
-off = A.flag' FL.LogNone (A.long "logging-off" <> A.help "Turn logging off.")
-logStdout = FL.LogStdout <$> bufSize
-logStderr = FL.LogStderr <$> bufSize
-fileNoRot = FL.LogFileNoRotate <$> fpath <*> bufSize
-file = FL.LogFile <$> logSpec <*> bufSize
-logSpec = FL.File.FileLogSpec <$> fpath <*> fsize <*> fbackupNumber
-fsize =
-  fmap abs . A.option A.auto $ A.long "logging-file-size" <> A.metavar "BYTES"
+off = A.flag' FL.LogNone $ A.long "logging-off" <> A.help "Turn logging off."
+logStdout = FL.LogStdout <$> bufSize "stdout-logging-"
+logStderr = FL.LogStderr <$> bufSize "stderr-logging-"
+fileNoRot = FL.LogFileNoRotate <$> fpath optPrefix <*> bufSize optPrefix
+  where optPrefix = "file-logging-no-rotate-"
+
+file = FL.LogFile <$> logSpec <*> bufSize optPrefix
+ where
+  logSpec = FL.File.FileLogSpec <$> fpath optPrefix <*> fsize <*> fbackupNumber
+  optPrefix = "file-logging-"
+  fsize =
+    fmap abs . A.option A.auto $ A.long (optPrefix <> "file-size") <> A.metavar
+      "BYTES"
+
 fbackupNumber =
   fmap abs
     .  A.option A.auto
@@ -102,11 +111,12 @@ fbackupNumber =
     <> A.help "The backup number of the logging file."
     <> A.metavar "INT"
 
-fpath =
-  A.strOption $ A.long "logging-file-name" <> A.help "Path to the logging file."
-bufSize =
+fpath optPrefix =
+  A.strOption $ A.long (optPrefix <> "logging-file-name") <> A.help
+    "Path to the logging file."
+bufSize optPrefix =
   A.option A.auto
-    $  A.long "logging-buf-size"
+    $  A.long (optPrefix <> "buf-size")
     <> A.metavar "BYTES"
     <> A.value FL.defaultBufSize
     <> A.showDefault
@@ -139,6 +149,17 @@ class MonadAppNameLogMulti m where
   askLoggers :: m AppNameLoggers
   -- | Locally modified loggers, useful for localised logging envs. 
   localLoggers :: (L.AppNameLogger -> L.AppNameLogger) -> m a -> m a
+
+-- | Local logging environment over multiple loggers. 
+localEnv
+  :: forall m a
+   . MonadAppNameLogMulti m
+  => (L.AppName -> L.AppName)
+  -> m a
+  -> m a
+localEnv modEnv = localLoggers modifyEnv
+ where
+  modifyEnv logger = logger { ML.environment = modEnv (ML.environment logger) }
 
 -- | A unified set of minimal constraints required for us to be able to log over multiple loggers. 
 type LoggingConstraints m = (MonadIO m, MonadMask m, MonadAppNameLogMulti m)
@@ -177,4 +198,4 @@ runLogFuncMulti :: LoggingConstraints m => ML.LogT L.AppName m () -> m ()
 runLogFuncMulti logFunc = do
   AppNameLoggers loggers <- askLoggers
   mapM_ runLoggerOver loggers
-  where runLoggerOver logger = ML.runLogTSafe logger logFunc
+  where runLoggerOver logger = ML.runLogT' logger logFunc

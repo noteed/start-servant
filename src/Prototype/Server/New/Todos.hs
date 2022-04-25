@@ -32,17 +32,18 @@ type TodoListModes
 
 -- brittany-disable-next-binding 
 type Todos =
-       Get '[B.HTML] (Page 'Authd UP.UserTodos)
-  :<|> "new-list" :> ( "form" :> Get '[B.HTML] (Page 'Authd UP.TodoListCreatePage)
+       Get '[B.HTML] (Page 'Authd User UP.UserTodos)
+  :<|> "new-list" :> ( "form" :> Get '[B.HTML] (Page 'Authd User UP.TodoListCreatePage)
                      :<|> "create" :> ReqBody '[FormUrlEncoded] TodoListCreate :> Post '[B.HTML] RWListPage
                      )
        -- Get a single todo-list 
-  :<|> "existing-list" :>  Capture "todoListId" TodoListId :> ( Get '[B.HTML] (Page 'Authd TodoListModes)
+  :<|> "existing-list" :>  Capture "todoListId" TodoListId :> ( Get '[B.HTML] (Page 'Authd User TodoListModes)
                                                                 :<|> "item" :> Capture "todoItemId" TodoItemId :> (MarkItem :<|> DelItem)
                                                                 :<|> "item" :> (CreateItem :<|> EditItem)
                                                               )
 
-type RWListPage = Page 'Authd (ACL.ResourceAuth 'ACL.TagWrite UP.TodoListRW)
+type RWListPage
+  = Page 'Authd User (ACL.ResourceAuth 'ACL.TagWrite UP.TodoListRW)
 
 -- brittany-disable-next-binding 
 -- | Item mark EP (FIXME: method should be changed to PUT) 

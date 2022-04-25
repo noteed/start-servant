@@ -54,14 +54,19 @@ module Logging
   , parseAppName
   -- * Logger
   , AppNameLogger
+  -- * Utils
+  , pShowStrict
+  , pShowLazy
   ) where
 
 import           Control.Lens
 import qualified Control.Monad.Log             as L
-import qualified Data.String                   as Str   -- required for IsString instance.
+import qualified Data.String                   as Str          -- required for IsString instance.
 import qualified Data.Text                     as T
+import qualified Data.Text.Lazy                as TL
 import qualified Options.Applicative           as A
 import "protolude" Protolude
+import qualified Text.Pretty.Simple            as PS
 
 -- | A type alias for convenience: this is a `L.Logger` where the `env` type is an `AppName`. 
 type AppNameLogger = L.Logger AppName
@@ -135,7 +140,16 @@ makeLenses ''AppName
 
 -- | Take any string; split at @/@; and use it as the AppName.
 instance IsString AppName where
-  fromString = AppName . T.splitOn "/" . T.pack
+  fromString = appNameFromText . T.pack
+
+appNameFromText :: Text -> AppName
+appNameFromText = AppName . T.splitOn "/"
+
+instance StringConv Text AppName where
+  strConv _ = appNameFromText
+
+instance StringConv Str.String AppName where
+  strConv _ = appNameFromText . T.pack
 
 -- | Parse the application name (`AppName`) wherein the sections are separated by @/@.
 -- Note the use of fromString which ensures we split out the incoming string properly.
@@ -145,3 +159,12 @@ parseAppName = Str.fromString <$> A.strOption
     "Application name: sections separated by `/`"
   )
 
+-- | The default pretty show expects lazy text, which is not compatible with our logging.
+pShowStrict :: Show a => a -> Text
+pShowStrict = TL.toStrict . PS.pShow
+{-# INLINE pShowStrict #-}
+
+-- | Renamed version of the pShow from the pretty-simple lib.
+pShowLazy :: Show a => a -> TL.Text
+pShowLazy = PS.pShow
+{-# INLINE pShowLazy #-}

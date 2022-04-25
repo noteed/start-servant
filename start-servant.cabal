@@ -76,6 +76,7 @@ common common-dependencies
 
     -- Characters
     , text
+    , pretty-simple
     , bytestring 
 
     -- TextShow instance for AppName (required for logging)
@@ -122,6 +123,7 @@ library
       Prototype.Server.New.Auth
 
       Prototype.Server.New.Page 
+      Prototype.Server.New.Page.Navbar
       Prototype.Server.New.Page.Shared 
       Prototype.Server.New.Page.Shared.ViewMode
 
@@ -135,6 +137,8 @@ library
       Prototype.Types
       Prototype.Types.NonEmptyText
       Prototype.Types.Secret
+     
+      Prototype.Lib.Wrapped 
 
       Prototype.Data.Examples
       Prototype.Pages.Home

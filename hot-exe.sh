@@ -27,6 +27,7 @@ while true; do
 		   --builddir $BUILD_DIR -- \
 		   stm \
 		   -M New \
+		   --logging-root-app-name "StartServant" \
 	     &
 	     ADDITIONAL_WATCH="-r src"
 	     ;;

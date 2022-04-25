@@ -50,14 +50,14 @@ import           Servant.Server.StaticFiles     ( serveDirectoryFileServer )
 -- TODO: forgot password pages etc. 
 type Public = "public" :>
   ( -- Ask the user to login 
-    "login" :> ( Get '[B.HTML] (Page 'Public LoginPage)
+    "login" :> ( Get '[B.HTML] (Page 'Public Void LoginPage)
                  :<|> "authenticate" -- actually authenticate the user. 
                       :> ReqBody '[FormUrlEncoded] Credentials
                       :> Verb 'POST 303 '[JSON] ( Headers Auth.PostAuthHeaders
                                                   NoContent
                                                 )
                )
-    :<|> "signup" :> Get '[B.HTML] (Page 'Public SignupPage)
+    :<|> "signup" :> Get '[B.HTML] (Page 'Public Void SignupPage)
     :<|> "static" :> Raw
   )
 
@@ -103,8 +103,8 @@ type Protected = Auth.UserAuthentication :> UserPages
 -- brittany-disable-next-binding
 type UserPages =
   -- User's welcome screen. 
-  "private" :> ( "welcome" :> Get '[B.HTML] (Page 'Authd Profile)
-               :<|> "user" :> ( "groups" :> Get '[B.HTML] (Page 'Authd UP.UserGroups)
+  "private" :> ( "welcome" :> Get '[B.HTML] (Page 'Authd User Profile)
+               :<|> "user" :> ( "groups" :> Get '[B.HTML] (Page 'Authd User UP.UserGroups)
                            :<|> "todos"  :> Todos.Todos -- The todos API
                               )
                )

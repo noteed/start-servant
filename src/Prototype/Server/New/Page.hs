@@ -17,10 +17,10 @@ module Prototype.Server.New.Page
   , SignupPage(..)
   ) where
 
-import           Control.Lens
 import           Protolude
+import qualified Prototype.Server.New.Page.Navbar
+                                               as Nav
 import           Prototype.Server.New.Page.Shared
-import           Prototype.Types
 import qualified Text.Blaze                    as B
 import qualified Text.Blaze.Html5              as H
 import           Text.Blaze.Html5               ( (!) )
@@ -47,33 +47,25 @@ instance H.ToMarkup (PageEither pageL pageR) where
 data AuthStat = Authd | Public
 
 -- | The page: a page can be authenticated or not authenticated. We guarantee that with types. 
-data Page (authStat :: AuthStat) page where
+data Page (authStat :: AuthStat) user page where
   -- | A page where a user information is available: the user is the authenticated user. 
-  AuthdPage ::B.ToMarkup page => User -> page -> Page 'Authd page
-  -- | A public page; no user information is necessary: eg. a login page.  
-  PublicPage ::B.ToMarkup page => page -> Page 'Public page
+  AuthdPage ::B.ToMarkup page => user -> page -> Page 'Authd user page
+  -- | A public page; no user information is necessary or possible (hence we use `Void`): eg. a login page.  
+  -- While the `Page` datatype is polymorphic over user, a public page makes it impossible to provide a user
+  -- type, hence the use of `Void`. 
+  PublicPage ::B.ToMarkup page => page -> Page 'Public Void page
 
-instance B.ToMarkup (Page 'Authd page) where
-  toMarkup (AuthdPage user page) = pageHeading . H.body $ do
+instance Nav.IsNavbarContent user => B.ToMarkup (Page 'Authd user page) where
+  toMarkup (AuthdPage user page) =
+    pageHeading
+      .  H.body
+      $
     -- TODO: Render the user's information as a navbar; in the future we'd like to add groups etc. the user belongs to here.
     -- render some sort of a divider between the navbar and the rest of the page contents. 
-    navbar
+         Nav.navbarMarkup user
+      >> B.toMarkup page
 
-    B.toMarkup page
-   where
-    navbar =
-      let
-        greeting     = B.toMarkup @Text $ "Hi! " <> (user ^. uEmail)
-        groupsLink   = H.a "Your groups" ! A.href "/private/user/groups"
-        todosLink    = H.a "Your todos" ! A.href "/private/user/todos"
-        settingsLink = H.a "Your settings" ! A.href "/private/user/settings"
-        logoutLink   = H.a "Logout" ! A.href "/private/user/logout"
-        allLinks =
-          spaceElems [greeting, groupsLink, todosLink, settingsLink, logoutLink]
-      in
-        allLinks >> H.hr >> H.br
-
-instance B.ToMarkup (Page 'Public page) where
+instance B.ToMarkup (Page 'Public _noAuth page) where
   toMarkup (PublicPage page) = pageHeading . H.body $ do
     -- TODO: proper navbar for unauthenticated pages.
     navbar
@@ -82,7 +74,7 @@ instance B.ToMarkup (Page 'Public page) where
 
 -- $commonPages Commonly used pages.
 
-data LoginPage = LoginPage H.AttributeValue
+newtype LoginPage = LoginPage H.AttributeValue
 
 instance B.ToMarkup LoginPage where
   toMarkup (LoginPage authPath) =

@@ -103,3 +103,4 @@ infix 4 =:=
 
 -- | Type-alias for convenience. A password has no exposures, and is a wrapper over `Text
 type Password = Secret '[] Text
+
