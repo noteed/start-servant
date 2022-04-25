@@ -12,7 +12,7 @@ import           Protolude
 import qualified Web.FormUrlEncoded            as Form
 import           Web.HttpApiData
 
-{- | A wrapped newtype is just a representation of another type, wrapped in a field at the type level. 
+{- | A wrapped newtype is just a representation of another type, associated with a specific field name, e.g. when (de)serialized to(from) JSON or HTTP form data. 
 
 Useful for deriving instances using instances of the underlying @t@ that can be wrapped in a particular "field". 
 
