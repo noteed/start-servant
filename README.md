@@ -1,3 +1,7 @@
+**Note**: Most of the code of this repository now lives in
+[`hypered/commence`](https://github.com/hypered/commence).
+
+
 # Prototyping with Servant and STM
 
 This is an example application to demonstrate how Servant and STM can be used
